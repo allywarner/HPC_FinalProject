@@ -8,15 +8,25 @@ int main(int argc,char* argv[]) {
 
   char matrix[100];
 
-  strcpy(matrix,"Matrices/finance256.dat");
+  if (argc > 1)
+    strcpy(matrix,argv[1]);
+  else {
+    fprintf(stderr, "error: no matrix path provided\n");
+    exit(EXIT_FAILURE);
+  }
 
   FILE* A = fopen(matrix,"r");
+
+  if (A == NULL){
+    fprintf(stderr, "error: matrix path invalid\n");
+    exit(EXIT_FAILURE);
+  }
 
   fscanf(A,"%d %d %d\n",&row,&col,&N);
   fclose(A);
 
   if (row != col){
-    printf("error: this is not a sqare matrix\n");
+    fprintf(stderr,"error: this is not a sqare matrix\n");
     exit(EXIT_FAILURE);
   }
 
