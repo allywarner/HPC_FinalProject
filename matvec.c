@@ -1,8 +1,9 @@
 #include "lanczos.h"
 
-void matvec(char* matrix, double* x, double* result, size_t dim) {
+void matvec(int** A, double* x, double* result, size_t n, size_t dim) {
 
-  unsigned int row, col, i, n;
+  int row, col;
+  unsigned int i;
   double* diagonal = (double*)malloc(sizeof(double)*dim);
 
 #pragma omp parallel for
@@ -11,41 +12,23 @@ void matvec(char* matrix, double* x, double* result, size_t dim) {
     diagonal[i] = 0;
   }
 
-  FILE* A = fopen(matrix,"r");
-
-  fscanf(A,"%d %d %d\n",&row,&col,&n);
-
-  if(col != dim){
-    fprintf(stderr, "error: cannot multiply %ux%u matrix by %lux1 vector\n"
-                                                      , row,col,dim);
-    exit(EXIT_FAILURE);
-  }
-
 //#pragma omp parallel for -- fix reading
   for(i=0;i<n;i++) {
-
-    fscanf(A,"%d %d\n",&row,&col);
-
+    row = A[0][i];
+    col = A[1][i];
     if (row != col){
       result[row-1]-=x[col-1];
       result[col-1]-=x[row-1];
       diagonal[col-1]+=1;
       diagonal[row-1]+=1;
     }
-
-
-    // for(j=0;j<dim;j++)
-    //   printf("%lf\n", result[j]);
-
   }
 
 #pragma omp parallel for
   for(i=0;i<dim;i++)
     result[i]+=diagonal[i]*x[i];
 
-
   free(diagonal);
-  fclose(A);
 }
 
 double dot(double* x, double* y, size_t n){
