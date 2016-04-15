@@ -27,10 +27,14 @@ void matvec(char* matrix, double* x, double* result, size_t dim) {
     if (row != col){
       result[row-1]-=x[col-1];
       result[col-1]-=x[row-1];
+      diagonal[col-1]+=1;
+      diagonal[row-1]+=1;
     }
 
-    diagonal[col-1]+=1;
-    diagonal[row-1]+=1;
+
+    // for(j=0;j<dim;j++)
+    //   printf("%lf\n", result[j]);
+
   }
 
   for(i=0;i<dim;i++)

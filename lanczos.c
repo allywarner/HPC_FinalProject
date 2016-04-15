@@ -1,5 +1,5 @@
 #include "lanczos.h"
-#define ITER 100
+#define ITER 1000
 
 int main(int argc,char* argv[]) {
 
@@ -43,6 +43,7 @@ int main(int argc,char* argv[]) {
 
   for(i=0;i<dim;i++)
     q[0][i] = (double)rand()/(double)RAND_MAX * 100;
+    // q[0][i] = i;
 
   b[0] = norm(q[0],dim);
 
@@ -52,6 +53,11 @@ int main(int argc,char* argv[]) {
   //lanczos iterations
   for(i=0;i<ITER;i++) {
     matvec(matrix,q[i],z,dim);
+
+    // for(j=0;j<dim;j++)
+    //   printf("%lf\n", z[j]);
+
+    // getchar();
     a[i] = dot(q[i],z,dim);
     if(i > 0) {
       for(j=0;j<dim;j++)
