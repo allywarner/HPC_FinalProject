@@ -32,21 +32,22 @@ int main(int argc,char* argv[]) {
 
   dim = row;
 
+  double* V = (double*)malloc(sizeof(double)*ITER*ITER);
   double* q[ITER];
   double* z = (double*)malloc(sizeof(double)*dim);
   double a[ITER];
   double b[ITER];
 
   for(i=0;i<ITER;i++)
-  q[i] = (double*)malloc(sizeof(double)*dim);
+    q[i] = (double*)malloc(sizeof(double)*dim);
 
   for(i=0;i<dim;i++)
-  q[0][i] = (double)rand()/(double)RAND_MAX * 100;
+    q[0][i] = (double)rand()/(double)RAND_MAX * 100;
 
   b[0] = norm(q[0],dim);
 
   for(i=0;i<dim;i++)
-  q[0][i] = q[0][i]/b[0];
+    q[0][i] = q[0][i]/b[0];
 
   //lanczos iterations
   for(i=0;i<ITER;i++) {
@@ -64,7 +65,7 @@ int main(int argc,char* argv[]) {
 
     if (b[i] == 0){
       printf("stopped short of %d iterations\n", ITER);
-      break;
+      exit(EXIT_FAILURE);
     }
 
     if(i < ITER-1)
@@ -72,7 +73,15 @@ int main(int argc,char* argv[]) {
         q[i+1][j] = z[j]/b[i];
   }
 
+  eig(a,b,V,ITER);
+
+  printf("eigenvalues: \n\t");
+  for(i=0;i<ITER;i++)
+    printf("%lf\n\t", a[i]);
+  printf("\n");
+
   free(z);
+  free(V);
   for(i=0;i<ITER;i++)
     free(q[i]);
 

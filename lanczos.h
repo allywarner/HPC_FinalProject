@@ -11,5 +11,6 @@
 void matvec(char* matrix, double* x, double* result,size_t dim);
 double dot(double* x, double* y, size_t n);
 double norm(double* x, size_t n);
+int eig(double* d, double* e, double* z,size_t n);
 
 #endif
