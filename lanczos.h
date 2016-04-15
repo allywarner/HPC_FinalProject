@@ -7,6 +7,7 @@
 #include <time.h>
 #include <math.h>
 #include <string.h>
+#include <omp.h>
 
 void matvec(char* matrix, double* x, double* result,size_t dim);
 double dot(double* x, double* y, size_t n);
