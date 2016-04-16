@@ -66,9 +66,11 @@ int main(int argc,char* argv[]) {
     matvec(A,q[i],z,N,dim);
     a[i] = dot(q[i],z,dim);
     if(i > 0) {
+      #pragma omp parallel for
       for(j=0;j<dim;j++)
         z[j] = z[j] - a[i]*q[i][j] - b[i-1]*q[i-1][j]; //no reorthogonalization
     } else {
+        #pragma omp parallel for
         for(j=0;j<dim;j++)
           z[j] = z[j] - a[i]*q[i][j];
     }
