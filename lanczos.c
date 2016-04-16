@@ -40,21 +40,24 @@ int main(int argc,char* argv[]) {
   double a[ITER]; // diagonal of lanczos matrix
   double b[ITER]; // subdiagonal of lanczos matrix
 
-  //scan matrix coordinates and store in memory
+  //scan matrix coordinates and store in memory -- can't parallelize?
   for(i=0;i<N;i++){
     fscanf(matrix,"%d %d\n",&A[0][i],&A[1][i]);
   }
 
   // allocate space for each Krylov space vector
+  #pragma omp parallel for
   for(i=0;i<ITER;i++)
     q[i] = (double*)malloc(sizeof(double)*dim);
 
   // initial guess
+  #pragma omp parallel for
   for(i=0;i<dim;i++)
     q[0][i] = (double)rand()/(double)RAND_MAX * 100;
 
   // normalize initial guess
   b[0] = norm(q[0],dim);
+  #pragma omp parallel for
   for(i=0;i<dim;i++)
     q[0][i] = q[0][i]/b[0];
 
@@ -91,10 +94,12 @@ int main(int argc,char* argv[]) {
     printf("%lf\n\t", a[i]);
   printf("\n");
 
+  free(A[0]);
   free(A[1]);
-  free(A[2]);
   free(z);
   free(V);
+
+  #pragma omp parallel for
   for(i=0;i<ITER;i++)
     free(q[i]);
 
