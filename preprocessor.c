@@ -46,6 +46,7 @@ int main(int argc,char* argv[]) {
 
   FILE* processed = fopen(strcat(str,mstr),"w");
 
+  //copy lower and upper triangular coordinates to memory
   j=0;
   status = fscanf(matrix,"%d %d\n",&row,&col);
   while(status == 2){
@@ -63,8 +64,10 @@ int main(int argc,char* argv[]) {
 
   fprintf(processed, "%d %d %d\n", num_row, num_col, j);
 
+  // sort coordinates by row
   quicksort(A,j,sizeof(coord),coordCompare);
 
+  // write sorted coordinates to a new file
   for(i=0;i<j;i++)
     fprintf(processed, "%d %d\n", A[i].row, A[i].col);
 
