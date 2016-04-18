@@ -1,19 +1,14 @@
 #include "lanczos.h"
 
-void matvec(coord* A, int* diagonal, double* x, double* result, size_t n, size_t dim) {
+void matvec(coord* A, int* diagonal, int* scanned, double* x, double* result, size_t n, size_t dim) {
 
 unsigned int i;
 int j;
 
-int* scanned = (int*)malloc(sizeof(int)*dim);
-
 #pragma omp parallel for
 for(i=0;i<dim;i++){
   result[i]=diagonal[i]*x[i];
-  scanned[i] = diagonal[i];
 }
-
-scan(scanned,dim,sizeof(int),addInt);
 
 // multiply x by laplacian of A
 #pragma omp parallel for private(j)
@@ -27,9 +22,7 @@ scan(scanned,dim,sizeof(int),addInt);
         result[i]-=x[A[j].col-1];
       }
     }
-
-    free(scanned);
-    }
+}
 
 
 double dot(double* x, double* y, size_t n){

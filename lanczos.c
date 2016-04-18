@@ -1,9 +1,9 @@
 #include "lanczos.h"
-#define ITER 100
+#define ITER 1000
 
 int main(int argc,char* argv[]) {
 
-  int i, j, row, col, N, dim;
+  int i, j, row, col, N, dim, T_size=ITER;
   srand(time(NULL));  // seed random number generator
   char mstr[100];
 
@@ -33,6 +33,7 @@ int main(int argc,char* argv[]) {
   coord* A = (coord*)malloc(sizeof(coord)*2*N); //ajacency matrix coordinates
 
   int* diagonal = (int*)malloc(sizeof(int)*dim); // #nonzeros specified per row
+  int* scanned = (int*)malloc(sizeof(int)*dim);
   double* V = (double*)malloc(sizeof(double)*ITER*ITER);// blank workspace for eig function
   double* q[ITER];          //Krylov space basis matrix
   double* z = (double*)malloc(sizeof(double)*dim); //new vector in each lanczos iteration
@@ -48,6 +49,12 @@ int main(int argc,char* argv[]) {
       fscanf(matrix,"%d %d\n",&A[i].row,&A[i].col);
       diagonal[A[i].row-1]+=1;
   }
+
+  #pragma omp parallel for
+  for(i=0;i<dim;i++)
+    scanned[i] = diagonal[i];
+
+  scan(scanned,dim,sizeof(int),addInt);
 
   // allocate space for each Krylov space vector on each processor
   for(i=0;i<ITER;i++)
@@ -65,8 +72,9 @@ int main(int argc,char* argv[]) {
     q[0][i] = q[0][i]/b[0];
 
   //lanczos iterations
+  double begin = omp_get_wtime();
   for(i=0;i<ITER;i++) {
-    matvec(A,diagonal,q[i],z,N,dim);
+    matvec(A,diagonal,scanned,q[i],z,N,dim);
     a[i] = dot(q[i],z,dim);
     if(i > 0) {
       #pragma omp parallel for
@@ -78,16 +86,18 @@ int main(int argc,char* argv[]) {
           z[j] = z[j] - a[i]*q[i][j];
     }
     b[i] = norm(z,dim);
-    if (b[i] < 1e-14){
-      printf("stopped short of %d iterations\n", ITER);
-      break;
-    }
+    // if (b[i] < 1e-14){
+    //   printf("stopped short of %d iterations\n", ITER);
+    //   T_size = i+1;
+    //   break;
+    // }
     if(i < ITER-1)
       for(j=0;j<dim;j++)
         q[i+1][j] = z[j]/b[i];
   }
+  double end = omp_get_wtime();
 
-  int T_size = i+1;
+  printf("time: %lf\n", end-begin);
 
   fclose(matrix);
 
@@ -102,6 +112,7 @@ int main(int argc,char* argv[]) {
 
   free(A);
   free(diagonal);
+  free(scanned);
   free(V);
   free(z);
 

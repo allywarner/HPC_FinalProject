@@ -14,7 +14,7 @@ typedef struct _coord{
      int col;
 }coord;
 
-void matvec(coord* A, int* nonzeros, double* x, double* result,size_t n, size_t dim);
+void matvec(coord* A, int* diagonal, int* scanned, double* x, double* result,size_t n, size_t dim);
 double dot(double* x, double* y, size_t n);
 double norm(double* x, size_t n);
 int eig(double* d, double* e, double* z,size_t n);
