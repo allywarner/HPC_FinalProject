@@ -1,36 +1,36 @@
 #include "lanczos.h"
 
-void matvec(int** A, double* x, double* result, size_t n, size_t dim) {
+void matvec(coord* A, int* diagonal, double* x, double* result, size_t n, size_t dim) {
 
-  int row, col;
-  unsigned int i;
-  double* diagonal = (double*)malloc(sizeof(double)*dim);
+unsigned int i;
+int j;
 
-// initialize result and diagonal to zero
+int* scanned = (int*)malloc(sizeof(int)*dim);
+
 #pragma omp parallel for
-  for(i=0;i<dim;i++) {
-    diagonal[i] = 0;
-    result[i] = 0;
-  }
+for(i=0;i<dim;i++){
+  result[i]=diagonal[i]*x[i];
+  scanned[i] = diagonal[i];
+}
+
+scan(scanned,dim,sizeof(int),addInt);
 
 // multiply x by laplacian of A
-  for(i=0;i<n;i++) {
-    row = A[0][i];
-    col = A[1][i];
-    if (row != col){
-      result[row-1]-=x[col-1];
-      result[col-1]-=x[row-1];
-      diagonal[col-1]+=1;
-      diagonal[row-1]+=1;
+#pragma omp parallel for private(j)
+  for(i=0;i<dim;i++) {
+    if(i > 0)
+      for(j=0;j<diagonal[i];j++){
+        result[i]-=x[A[scanned[i-1] + j].col-1];
+      }
+    else
+      for(j=0;j<diagonal[i];j++) {
+        result[i]-=x[A[j].col-1];
+      }
     }
-  }
 
-#pragma omp parallel for
-  for(i=0;i<dim;i++)
-    result[i]+=diagonal[i]*x[i];
+    free(scanned);
+    }
 
-  free(diagonal);
-}
 
 double dot(double* x, double* y, size_t n){
   unsigned int i;

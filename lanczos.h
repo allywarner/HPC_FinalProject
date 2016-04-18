@@ -9,9 +9,19 @@
 #include <string.h>
 #include <omp.h>
 
-void matvec(int** A, double* x, double* result,size_t n, size_t dim);
+typedef struct _coord{
+     int row;
+     int col;
+}coord;
+
+void matvec(coord* A, int* nonzeros, double* x, double* result,size_t n, size_t dim);
 double dot(double* x, double* y, size_t n);
 double norm(double* x, size_t n);
 int eig(double* d, double* e, double* z,size_t n);
+void scan(void* base, size_t n,size_t l, void(*oper)(void* x1, void* x2));
+void rec_scan(void* base, size_t n,size_t l, void(*oper)(void* x1, void* x2));
+void addInt(void* x1, void* x2);
+void addDouble(void* x1, void* x2);
+void addVec3(void* x1, void* x2);
 
 #endif

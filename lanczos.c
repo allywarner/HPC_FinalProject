@@ -30,23 +30,26 @@ int main(int argc,char* argv[]) {
   }
   dim = row;
 
-  // define variables
-  int* A[2]; //graph matrix coordinates
-  A[0] = (int*)malloc(sizeof(int)*N);
-  A[1] = (int*)malloc(sizeof(int)*N);
+  coord* A = (coord*)malloc(sizeof(coord)*2*N); //ajacency matrix coordinates
+
+  int* diagonal = (int*)malloc(sizeof(int)*dim); // #nonzeros specified per row
   double* V = (double*)malloc(sizeof(double)*ITER*ITER);// blank workspace for eig function
   double* q[ITER];          //Krylov space basis matrix
   double* z = (double*)malloc(sizeof(double)*dim); //new vector in each lanczos iteration
   double a[ITER]; // diagonal of lanczos matrix
   double b[ITER]; // subdiagonal of lanczos matrix
 
-  //scan matrix coordinates and store in memory -- can't parallelize?
+  #pragma omp parallel for
+  for(i=0;i<dim;i++)
+    diagonal[i] = 0;
+
+  //scan matrix coordinates and store in memory -- can't parallelize
   for(i=0;i<N;i++){
-    fscanf(matrix,"%d %d\n",&A[0][i],&A[1][i]);
+      fscanf(matrix,"%d %d\n",&A[i].row,&A[i].col);
+      diagonal[A[i].row-1]+=1;
   }
 
-  // allocate space for each Krylov space vector
-  #pragma omp parallel for
+  // allocate space for each Krylov space vector on each processor
   for(i=0;i<ITER;i++)
     q[i] = (double*)malloc(sizeof(double)*dim);
 
@@ -63,7 +66,7 @@ int main(int argc,char* argv[]) {
 
   //lanczos iterations
   for(i=0;i<ITER;i++) {
-    matvec(A,q[i],z,N,dim);
+    matvec(A,diagonal,q[i],z,N,dim);
     a[i] = dot(q[i],z,dim);
     if(i > 0) {
       #pragma omp parallel for
@@ -75,33 +78,34 @@ int main(int argc,char* argv[]) {
           z[j] = z[j] - a[i]*q[i][j];
     }
     b[i] = norm(z,dim);
-    if (b[i] == 0){
+    if (b[i] < 1e-14){
       printf("stopped short of %d iterations\n", ITER);
-      exit(EXIT_FAILURE);
+      break;
     }
     if(i < ITER-1)
       for(j=0;j<dim;j++)
         q[i+1][j] = z[j]/b[i];
   }
 
+  int T_size = i+1;
+
   fclose(matrix);
 
   // compute eigenvalues and eigenvectors of lanczos matrix
-  eig(a,b,V,ITER);
-
+  eig(a,b,V,T_size);
 
   // print eigenvalues
   printf("eigenvalues: \n\t");
-  for(i=0;i<ITER;i++)
+  for(i=0;i<T_size;i++)
     printf("%lf\n\t", a[i]);
   printf("\n");
 
-  free(A[0]);
-  free(A[1]);
-  free(z);
+  free(A);
+  free(diagonal);
   free(V);
+  free(z);
 
-  #pragma omp parallel for
+  // free space on each processor
   for(i=0;i<ITER;i++)
     free(q[i]);
 
