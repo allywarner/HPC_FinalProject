@@ -1,5 +1,5 @@
 #include "lanczos.h"
-#define ITER 1000
+#define ITER 100
 
 int main(int argc,char* argv[]) {
 
@@ -86,11 +86,11 @@ int main(int argc,char* argv[]) {
           z[j] = z[j] - a[i]*q[i][j];
     }
     b[i] = norm(z,dim);
-    // if (b[i] < 1e-14){
-    //   printf("stopped short of %d iterations\n", ITER);
-    //   T_size = i+1;
-    //   break;
-    // }
+    if (b[i] < 1e-14){
+      printf("stopped short of %d iterations\n", ITER);
+      T_size = i+1;
+      break;
+    }
     if(i < ITER-1)
       for(j=0;j<dim;j++)
         q[i+1][j] = z[j]/b[i];
