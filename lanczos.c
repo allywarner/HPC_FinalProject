@@ -56,7 +56,8 @@ int main(int argc,char* argv[]) {
 
   scan(scanned,dim,sizeof(int),addInt);
 
-  // allocate space for each Krylov space vector on each processor
+  // allocate space for each Krylov space vector
+  #pragma omp parallel for
   for(i=0;i<ITER;i++)
     q[i] = (double*)malloc(sizeof(double)*dim);
 
@@ -72,28 +73,52 @@ int main(int argc,char* argv[]) {
     q[0][i] = q[0][i]/b[0];
 
   //lanczos iterations
+  double ortho[ITER];
   double begin = omp_get_wtime();
-  for(i=0;i<ITER;i++) {
-    matvec(A,diagonal,scanned,q[i],z,N,dim);
-    a[i] = dot(q[i],z,dim);
-    if(i > 0) {
-      #pragma omp parallel for
-      for(j=0;j<dim;j++)
-        z[j] = z[j] - a[i]*q[i][j] - b[i-1]*q[i-1][j]; //no reorthogonalization
-    } else {
+  for(j=0;j<ITER;j++) {
+    matvec(A,diagonal,scanned,q[j],z,N,dim);
+    a[j] = dot(q[j],z,dim);
+    #pragma omp parallel for
+    for(i=0;i<=j;i++)
+      ortho[i] = dot(q[i],z,dim);
+    #pragma omp parallel
+    {
+      int l;
+      if(j > 0) {
+        #pragma omp for
+        for(i=0;i<dim;i++)
+
+        // full reorthogonalization
+          for(l=j;l<=j;l++)
+            z[i] -= ortho[l]*q[l][i];
         #pragma omp parallel for
-        for(j=0;j<dim;j++)
-          z[j] = z[j] - a[i]*q[i][j];
+        for(i=0;i<=j;i++)
+          ortho[i] = dot(q[i],z,dim);
+        #pragma omp for
+        for(i=0;i<dim;i++)
+          for(l=0;l<=j;l++)
+            z[i] -= ortho[l]*q[l][i];
+
+        //no reorthogonalization
+          // z[i] = z[i] - a[j]*q[j][i] - b[j-1]*q[j-1][i];
+
+          
+      } else {
+          #pragma omp for
+          for(i=0;i<dim;i++)
+            z[i] = z[i] - a[j]*q[j][i];
+      }
     }
-    b[i] = norm(z,dim);
-    if (b[i] < 1e-14){
+    b[j] = norm(z,dim);
+    if (b[j] < 1e-13){
       printf("stopped short of %d iterations\n", ITER);
-      T_size = i+1;
+      T_size = j+1;
       break;
     }
-    if(i < ITER-1)
-      for(j=0;j<dim;j++)
-        q[i+1][j] = z[j]/b[i];
+    if(j < ITER-1)
+      #pragma omp parallel for
+      for(i=0;i<dim;i++)
+        q[j+1][i] = z[i]/b[j];
   }
   double end = omp_get_wtime();
 
