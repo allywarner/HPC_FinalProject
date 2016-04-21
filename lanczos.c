@@ -81,34 +81,33 @@ int main(int argc,char* argv[]) {
     #pragma omp parallel for
     for(i=0;i<=j;i++)
       ortho[i] = dot(q[i],z,dim);
-    #pragma omp parallel
-    {
+
       int l;
       if(j > 0) {
-        #pragma omp for
-        for(i=0;i<dim;i++)
-
-        // full reorthogonalization
-          for(l=j;l<=j;l++)
+        for(l=0;l<=j;l++) {
+          #pragma omp parallel for
+          for(i=0;i<dim;i++)
             z[i] -= ortho[l]*q[l][i];
+        }
         #pragma omp parallel for
         for(i=0;i<=j;i++)
           ortho[i] = dot(q[i],z,dim);
-        #pragma omp for
-        for(i=0;i<dim;i++)
-          for(l=0;l<=j;l++)
+        for(l=0;l<=j;l++){
+          #pragma omp parallel for
+          for(i=0;i<dim;i++)
             z[i] -= ortho[l]*q[l][i];
+        }
 
         //no reorthogonalization
           // z[i] = z[i] - a[j]*q[j][i] - b[j-1]*q[j-1][i];
 
-          
+
       } else {
           #pragma omp for
           for(i=0;i<dim;i++)
             z[i] = z[i] - a[j]*q[j][i];
       }
-    }
+
     b[j] = norm(z,dim);
     if (b[j] < 1e-13){
       printf("stopped short of %d iterations\n", ITER);
@@ -116,7 +115,7 @@ int main(int argc,char* argv[]) {
       break;
     }
     if(j < ITER-1)
-      #pragma omp parallel for
+      // #pragma omp parallel for
       for(i=0;i<dim;i++)
         q[j+1][i] = z[i]/b[j];
   }
