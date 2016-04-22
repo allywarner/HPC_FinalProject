@@ -246,7 +246,6 @@ void partition(coord* A, size_t dim, size_t N, int comm_size, MPI_Comm comm ) {
     fprintf(fp,"%d %d\n",Anew[i].row,Anew[i].col);
 
 
-
   // MPI_Comm_split(comm, color, rank, &new_comm);
   // partition(Anew,newDim,AnewCount,size,new_comm);
 
