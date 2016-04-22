@@ -1,5 +1,8 @@
 #include "lanczos.h"
+#include <mpi.h>
 #define ITER 100
+
+void partition(coord* A, size_t dim, size_t N, int comm_size, MPI_Comm comm);
 
 int main(int argc,char* argv[]) {
 
@@ -9,7 +12,7 @@ int main(int argc,char* argv[]) {
   MPI_Comm_rank(world_comm, &world_rank);
   MPI_Comm_size(world_comm, &world_size);
 
-  int i, j, row, col, N, dim, T_size=ITER;
+  int i, row, col, N, dim;
   srand(time(NULL));  // seed random number generator
   char mstr[100];
 
@@ -37,7 +40,19 @@ int main(int argc,char* argv[]) {
   dim = row;
 
   coord* A = (coord*)malloc(sizeof(coord)*2*N); //ajacency matrix coordinates
+  //scan matrix coordinates and store in memory
+  for(i=0;i<N;i++)
+    fscanf(matrix,"%d %d\n",&A[i].row,&A[i].col);
 
+  fclose(matrix);
+
+  partition(A, dim, N, world_size, world_comm);
+
+}
+
+void partition(coord* A, size_t dim, size_t N, int comm_size, MPI_Comm comm ) {
+
+  unsigned int i, j, l, T_size=ITER;
   int* diagonal = (int*)malloc(sizeof(int)*dim); // #nonzeros specified per row
   int* scanned = (int*)malloc(sizeof(int)*dim);
   double* V = (double*)malloc(sizeof(double)*ITER*ITER);// blank workspace for eig function
@@ -50,11 +65,8 @@ int main(int argc,char* argv[]) {
   for(i=0;i<dim;i++)
     diagonal[i] = 0;
 
-  //scan matrix coordinates and store in memory -- can't parallelize
-  for(i=0;i<N;i++){
-      fscanf(matrix,"%d %d\n",&A[i].row,&A[i].col);
-      diagonal[A[i].row-1]+=1;
-  }
+  for(i=0;i<N;i++)
+    diagonal[A[i].row-1]+=1;
 
   #pragma omp parallel for
   for(i=0;i<dim;i++)
@@ -88,21 +100,20 @@ int main(int argc,char* argv[]) {
     for(i=0;i<=j;i++)
       ortho[i] = dot(q[i],z,dim);
 
-      int l;
-      if(j > 0) {
-        for(l=0;l<=j;l++) {
-          #pragma omp parallel for
-          for(i=0;i<dim;i++)
-            z[i] -= ortho[l]*q[l][i];
-        }
+    if(j > 0) {
+      for(l=0;l<=j;l++) {
         #pragma omp parallel for
-        for(i=0;i<=j;i++)
-          ortho[i] = dot(q[i],z,dim);
-        for(l=0;l<=j;l++){
-          #pragma omp parallel for
-          for(i=0;i<dim;i++)
-            z[i] -= ortho[l]*q[l][i];
-        }
+        for(i=0;i<dim;i++)
+          z[i] -= ortho[l]*q[l][i];
+      }
+      #pragma omp parallel for
+      for(i=0;i<=j;i++)
+        ortho[i] = dot(q[i],z,dim);
+      for(l=0;l<=j;l++){
+        #pragma omp parallel for
+        for(i=0;i<dim;i++)
+          z[i] -= ortho[l]*q[l][i];
+      }
 
         //no reorthogonalization
           // z[i] = z[i] - a[j]*q[j][i] - b[j-1]*q[j-1][i];
@@ -129,10 +140,24 @@ int main(int argc,char* argv[]) {
 
   printf("time: %lf\n", end-begin);
 
-  fclose(matrix);
-
   // compute eigenvalues and eigenvectors of lanczos matrix
   eig(a,b,V,T_size);
+
+  double* splitter = (double*)malloc(sizeof(double)*dim);
+
+  #pragma omp parallel for
+  for(i=0;i<dim;i++)
+    splitter[i] = 0;
+
+  #pragma omp parallel for private(j)
+  for(i=0;i<dim;i++)
+    for(j=0;j<T_size;j++)
+      splitter[i] += q[j][i]*V[T_size + j];
+
+
+  printf("splitter:\n");
+  for(i=0;i<dim;i++)
+    printf("%lf\n", splitter[i]);
 
   // print eigenvalues
   printf("eigenvalues: \n\t");
@@ -146,12 +171,9 @@ int main(int argc,char* argv[]) {
   free(V);
   free(z);
 
-  // free space on each processor
+  #pragma omp parallel for
   for(i=0;i<ITER;i++)
     free(q[i]);
 
   MPI_Finalize();
-
-
-  return 0;
 }
