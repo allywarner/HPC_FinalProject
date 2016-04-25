@@ -178,23 +178,28 @@ void partition(coord* A, size_t dim, size_t N, int comm_size, MPI_Comm comm ) {
     free(q[i]);
 
 
-  printf("splitter:\n");
-  for(i=0;i<dim;i++)
-    printf("%lf\n", splitter[i]);
-
-  // print eigenvalues
-  printf("eigenvalues: \n\t");
-  for(i=0;i<T_size;i++)
-    printf("%lf\n\t", a[i]);
-  printf("\n");
+  // printf("splitter:\n");
+  // for(i=0;i<dim;i++)
+  //   printf("%lf\n", splitter[i]);
+  //
+  // // print eigenvalues
+  // printf("eigenvalues: \n\t");
+  // for(i=0;i<T_size;i++)
+  //   printf("%lf\n\t", a[i]);
+  // printf("\n");
+  //
+  // printf("A.row: \n\t");
+  // for(i=0;i<N;i++)
+  //   printf("%d\n\t", A[i].row-1);
+  // printf("\n");
 
   unsigned int AnewCount=0, newDim=0;
 
   #pragma omp parallel for reduction(+:AnewCount)
   for(i=0;i<N;i++)
-    if (color == 0 && splitter[A[i].row] >= 0 && splitter[A[i].col] >= 0)
+    if (color == 0 && splitter[A[i].row-1] >= 0 && splitter[A[i].col-1] >= 0)
       AnewCount++;
-    else if (color == 1 && splitter[A[i].row] < 0 && splitter[A[i].col] < 0)
+    else if (color == 1 && splitter[A[i].row-1] < 0 && splitter[A[i].col-1] < 0)
       AnewCount++;
 
   #pragma omp parallel for reduction(+:newDim)
@@ -211,19 +216,16 @@ void partition(coord* A, size_t dim, size_t N, int comm_size, MPI_Comm comm ) {
 
   AnewCount=0;
 
-
-
-
   #pragma omp parallel for
   for(j=0;j<N;j++)
-    if(color == 0 && splitter[A[j].row] >= 0 && splitter[A[j].col] >= 0){
+    if(color == 0 && splitter[A[j].row-1] >= 0 && splitter[A[j].col-1] >= 0){
       omp_set_lock(&writelock);
       Anew[AnewCount].row = A[j].row;
       Anew[AnewCount].col = A[j].col;
       AnewCount++;
       omp_unset_lock(&writelock);
     }
-    else if(color == 1 && splitter[A[j].row] < 0 && splitter[A[j].col] < 0){
+    else if(color == 1 && splitter[A[j].row-1] < 0 && splitter[A[j].col-1] < 0){
       omp_set_lock(&writelock);
       Anew[AnewCount].row = A[j].row;
       Anew[AnewCount].col = A[j].col;
@@ -235,7 +237,7 @@ void partition(coord* A, size_t dim, size_t N, int comm_size, MPI_Comm comm ) {
 
   FILE* fp;
 
-  printf("%d %d\n", color, newDim);
+  // printf("%d %d\n", color, newDim);
 
   if(color == 0)
     fp = fopen("Matrices/Aplus.dat","w");
