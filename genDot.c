@@ -6,10 +6,10 @@
 #include <string.h>
 
 //Initializes 16 colors. These can be changed to anything and I tried to pick colors that look different enough! More colors can be found at http://www.graphviz.org/doc/info/colors.html if you don't like them!
-char* colors[] = {"green","red","blue","purple","yellow","magenta","brown","black","orange","skyblue1","forestgreen","slateblue1","wheat4","lightpink2","ivory4","cyan"};
+char* colors[] = {"black","red","blue","purple","yellow","magenta","brown","green","orange","skyblue1","forestgreen","slateblue1","wheat4","lightpink2","ivory4","cyan"};
 
 //Generates the dot file with either one color or no color, we can easily change this if we are getting a file with several processors worth of information.
-void genDot(char* data,int colorNum){
+void genDot(char* data){
     
     //Initializes files
     FILE* dotFile;
@@ -23,17 +23,13 @@ void genDot(char* data,int colorNum){
     fprintf(dotFile,"graph {\n");
     fprintf(dotFile,"node [shape = point]\n");
     
-    //Gets rid of the first line in the file we are reading
+    //Gets rid of the first line in the file we are reading because it does not have connection or processor data
     fscanf(readFile,"%*[^\n]\n",NULL);
     
     //reads and writes until the end of the read file, writes a color if the input is not 0
-    int node1,node2;
-    while(fscanf(readFile,"%d %d\n",&node1,&node2) != EOF) {
-        if (colorNum == 0) {
-            fprintf(dotFile,"%d -- %d;\n",node1,node2);
-        } else {
-            fprintf(dotFile,"%d -- %d [style=filled,fillcolor = %s,fixedsize=true,color=%s];\n",node1,node2,colors[colorNum-1],colors[colorNum-1]);
-        }
+    int node1,node2,process;
+    while(fscanf(readFile,"%d %d %d\n",&node1,&node2,&process) != EOF) {
+        fprintf(dotFile,"%d -- %d [style=filled,fillcolor = %s,fixedsize=true,color=%s];\n",node1,node2,colors[process],colors[process]);
     }
     //writes the last line
     fprintf(dotFile,"}");
@@ -52,6 +48,5 @@ int main(int argc, char* argv[]) {
     }
     
     char* file = argv[1];
-    int color = atoi(argv[2]);
-    genDot(file,color);
+    genDot(file);
 }
