@@ -1,0 +1,62 @@
+\documentclass[11pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}
+\usepackage{amsmath}              		% See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
+								% TeX will automatically convert eps --> pdf in pdflatex		
+\usepackage{amssymb}
+
+\title{CS 6320 - Project Proposal}
+\author{Ally Warner \& Ryan Viertel}
+%\date{}							% Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+\textbf{Data stuff and "what's the point"}
+
+\textbf{Ally and Ryan}
+
+Data stuff from proposal:
+
+Our principal dataset is available from the University of Florida Sparse Matrix Collection [1]. We will be partitioning several graphs from this dataset to show that our algorithm is robust and stable. We also plan to include a brain connectivity matrix to see how our algorithm cooperates with a large matrix with real anatomical data [2]. 
+
+Goals stuff from proposal:
+
+With this project, we aim to partition an undirected graph using the Lanzcos algorithm [3] to find the second smallest eigenvalues and corresponding eigenvectors. We will test the differences between full reorthogonalization and no reorthogonalization in communication, speed and amount of work. We will also test the differences in the amount of iterations to be performed when using Lanzcos. We would compare from 10 to 160 iterations and compare the quality of the partition. We will be analyzing the graphs using SCIRun visualization to check the correctness of our partitions. 
+
+\section{Description of Algorithm}
+
+\textbf{Ryan}
+
+\section{Testing \& Analysis}
+
+\textbf{Ally}
+
+\section{Conclusions}
+
+\textbf{Ally}
+
+\section{References}
+
+\begin{enumerate}
+
+\item The University of Florida Sparse Matrix Collection, T. A. Davis and Y. Hu, ACM Transactions on Mathematical Software, Vol 38, Issue 1, 2011, pp 1:1 - 1:25. 
+
+http://www.cise.ufl.edu/research/sparse/matrices.
+
+\item David K. Hammond, Yaniv Gur, and Kyle Morgan, "Improving EEG source estimation with DWI-based Anatomical Brain connectivity via sparse representation with cordial graph wavelets."
+
+\item James Demmel, Applied Numerical Linear Algebra, 1996
+
+\item SCI Institute, SCIRun: A Scientific Computing Problem Solving Environment, Scientific Computing and Imaging Institute (SCI), Download from: http://www.scirun.org, 2015
+
+\item Emden R. Gansner and Stephen C. North, "An open graph visualization system and its applications to software engineering", SOFTWARE - PRACTICE AND EXPERIENCE, 2000, 30, 11, 1203--1233, Download from www.graphviz.org
+
+\end{enumerate}
+
+\end{document}
