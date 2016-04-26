@@ -20,7 +20,8 @@ void genDot(char* data,int colorNum){
     dotFile = fopen("dotFile.gv","w");
     
     //Writes the first line
-    fprintf(dotFile,"graph {fixedsize=true\n");
+    fprintf(dotFile,"graph {\n");
+    fprintf(dotFile,"node [shape = point]\n");
     
     //Gets rid of the first line in the file we are reading
     fscanf(readFile,"%*[^\n]\n",NULL);
@@ -31,7 +32,7 @@ void genDot(char* data,int colorNum){
         if (colorNum == 0) {
             fprintf(dotFile,"%d -- %d;\n",node1,node2);
         } else {
-            fprintf(dotFile,"%d -- %d;\nnode[shape=circle,color = %s,style=filled,height=0.01,width=0.01];\n",node1,node2,colors[colorNum-1]);
+            fprintf(dotFile,"%d -- %d [style=filled,fillcolor = %s,fixedsize=true,color=%s];\n",node1,node2,colors[colorNum-1],colors[colorNum-1]);
         }
     }
     //writes the last line
