@@ -45,7 +45,7 @@ void file2Dot(char* data){
     fclose(dotFile);
 }
 
-void coord2Dot(coord* connections, size_t n, int process){
+void coord2Dot(coord* connections, int n, int process){
 
     //Initializes file
     FILE* dotFile;
