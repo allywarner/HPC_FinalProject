@@ -29,7 +29,7 @@ void file2Dot(char* data){
     fprintf(dotFile,"node [shape = point]\n");
 
     //Gets rid of the first line in the file we are reading because it does not have connection or processor data
-    fscanf(readFile,"%*[^\n]\n",NULL);
+    fscanf(readFile,"%*d %*d %*d\n");
 
     //reads and writes until the end of the read file, writes a color based on the processor
     int node1,node2,process;
@@ -47,40 +47,32 @@ void file2Dot(char* data){
 
 void coord2Dot(coord* connections, int n, int process){
 
-    //Initializes file
     FILE* dotFile;
 
     //Opens new file to write
-    dotFile = fopen("dotFile.gc","w");
-
-    //Writes the first two lines
-    fprintf(dotFile,"graph {\n");
-    fprintf(dotFile,"node [shape = point]\n");
+    dotFile = fopen("dotFile.gc","a");
 
     //Writes the file for the length of the struct, writes a color based on the processor
-    int node1,node2;
-    for (int i = 0; i < n; i++) {
+    int node1,node2,i;
+    for (i = 0; i < n; i++) {
         node1 = connections[i].row;
         node2 = connections[i].col;
         fprintf(dotFile,"%d -- %d [style=filled,fillcolor = %s,fixedsize=true,color=%s];\n",node1,node2,colors[process],colors[process]);
     }
-
-    //Writes the last line
-    fprintf(dotFile,"}");
 
     //Closes the file
     fclose(dotFile);
 
 }
 
-////This main is for debugging
-int main(int argc, char* argv[]) {
-
-    if (argc < 2){
-        printf("Error.");
-        return 1;
-    }
-
-    char* file = argv[1];
-    file2Dot(file);
-}
+// ////This main is for debugging
+// int main(int argc, char* argv[]) {
+//
+//     if (argc < 2){
+//         printf("Error.");
+//         return 1;
+//     }
+//
+//     char* file = argv[1];
+//     file2Dot(file);
+// }

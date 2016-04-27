@@ -1,4 +1,4 @@
-objects = matvec.o eig.o scan.o partition.o #lanczos.o
+objects = matvec.o eig.o scan.o partition.o genDot.o
 
 partition: $(objects)
 	mpicc -o partition $(objects) -lm -lblas -llapack -fopenmp
@@ -13,6 +13,8 @@ eig.o: eig.c
 	cc -c eig.c -llapack -lblas
 scan.o: scan.c
 	cc -c scan.c -fopenmp
+genDot.o: genDot.c
+	cc -c genDot.c -fopenmp
 
 .PHONY: clean
 clean:

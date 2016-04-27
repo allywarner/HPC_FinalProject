@@ -1,16 +1,15 @@
 #include "lanczos.h"
 #include <mpi.h>
-#define ITER 100
+#define ITER 120
 
-void partition(coord* A, size_t dim, size_t N, int comm_size, MPI_Comm comm);
+void partition(coord* A, size_t dim, size_t N, MPI_Comm comm);
 
 int main(int argc,char* argv[]) {
 
   MPI_Init(&argc,&argv);
   MPI_Comm world_comm = MPI_COMM_WORLD;
-  int world_rank, world_size;
+  int world_rank;
   MPI_Comm_rank(world_comm, &world_rank);
-  MPI_Comm_size(world_comm, &world_size);
 
   int i, row, col, N, dim;
   char mstr[100];
@@ -48,16 +47,49 @@ int main(int argc,char* argv[]) {
 
   fclose(matrix);
 
-  partition(A, dim, N, world_size, world_comm);
+  //Initializes file
+  FILE* dotFile;
 
+  //Opens new file to write
+  dotFile = fopen("dotFile.gc","a");
+
+  if(world_rank == 0) {
+    //Writes the first two lines
+    fprintf(dotFile,"graph {\n");
+    fprintf(dotFile,"node [shape = point]\n");
+  }
+
+  //Closes the file
+  fclose(dotFile);
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  partition(A,dim,N,world_comm);
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  //Opens new file to write
+  dotFile = fopen("dotFile.gc","a");
+
+  if(world_rank == 0){
+    //Writes the last line
+    fprintf(dotFile,"}");
+  }
+
+  //Closes the file
+  fclose(dotFile);
+
+
+
+  free(A);
+  MPI_Finalize();
 }
 
-void partition(coord* A, size_t dim, size_t N, int comm_size, MPI_Comm comm ) {
+void partition(coord* A, size_t dim, size_t N, MPI_Comm comm ) {
 
-  int rank, size, color;
+  int rank, color, new_size;
   MPI_Comm new_comm;
   MPI_Comm_rank(comm, &rank);
-  MPI_Comm_size(comm, &size);
   color = rank % 2;
 
   unsigned int i, j, l, T_size=ITER;
@@ -177,20 +209,23 @@ void partition(coord* A, size_t dim, size_t N, int comm_size, MPI_Comm comm ) {
   for(i=0;i<ITER;i++)
     free(q[i]);
 
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD,&world_rank);
 
-  // printf("splitter:\n");
-  // for(i=0;i<dim;i++)
-  //   printf("%lf\n", splitter[i]);
+  printf("node %d:\n", world_rank);
+  printf("splitter:\n");
+  for(i=0;i<dim;i++)
+    printf("%lf\n", splitter[i]);
+
+  // print eigenvalues
+  printf("eigenvalues: \n\t");
+  for(i=0;i<T_size;i++)
+    printf("%lf\n\t", a[i]);
+  printf("\n");
   //
-  // // print eigenvalues
-  // printf("eigenvalues: \n\t");
-  // for(i=0;i<T_size;i++)
-  //   printf("%lf\n\t", a[i]);
-  // printf("\n");
-  //
-  // printf("A.row: \n\t");
+  // printf("A: \n\t");
   // for(i=0;i<N;i++)
-  //   printf("%d\n\t", A[i].row-1);
+  //   printf("%d %d\n\t", A[i].row,A[i].col);
   // printf("\n");
 
   unsigned int AnewCount=0, newDim=0;
@@ -201,13 +236,14 @@ void partition(coord* A, size_t dim, size_t N, int comm_size, MPI_Comm comm ) {
       AnewCount++;
     else if (color == 1 && splitter[A[i].row-1] < 0 && splitter[A[i].col-1] < 0)
       AnewCount++;
+  //
+  // #pragma omp parallel for reduction(+:newDim)
+  // for(i=0;i<dim;i++)
+  //   if (color == 0 && splitter[i] >= 0)
+  //     newDim++;
+  //   else if (color == 1 && splitter[i] < 0)
+  //     newDim++;
 
-  #pragma omp parallel for reduction(+:newDim)
-  for(i=0;i<dim;i++)
-    if (color == 0 && splitter[i] >= 0)
-      newDim++;
-    else if (color == 1 && splitter[i] < 0)
-      newDim++;
 
   coord* Anew = (coord*)malloc(sizeof(coord)*AnewCount);
 
@@ -237,24 +273,34 @@ void partition(coord* A, size_t dim, size_t N, int comm_size, MPI_Comm comm ) {
 
   FILE* fp;
 
-  // printf("%d %d\n", color, newDim);
-
   if(color == 0)
     fp = fopen("Matrices/Aplus.dat","w");
   else
     fp = fopen("Matrices/Aminus.dat","w");
 
+  fprintf(fp,"%lu %lu %d\n", dim,dim,AnewCount);
   for(i=0;i<AnewCount;i++)
     fprintf(fp,"%d %d\n",Anew[i].row,Anew[i].col);
 
+  fclose(fp);
 
-  // MPI_Comm_split(comm, color, rank, &new_comm);
-  // partition(Anew,newDim,AnewCount,size,new_comm);
+  getchar();
 
 
-  free(A);
+    MPI_Comm_split(comm, color, rank, &new_comm);
+    MPI_Comm_size(new_comm,&new_size);
+    if(new_size > 1)
+      partition(Anew,dim,AnewCount,new_comm);
+    else{
+
+      // coord2Dot(Anew,AnewCount,world_rank);
+      // printf("node %d nodes:\n", world_rank);
+      // for(i=0;i<AnewCount;i++)
+      //   printf("%d\n", Anew[i].row);
+    }
+
+  printf("-----------------------------\n");
+
   free(Anew);
   free(splitter);
-
-  MPI_Finalize();
 }

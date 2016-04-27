@@ -22,5 +22,6 @@ void rec_scan(void* base, size_t n,size_t l, void(*oper)(void* x1, void* x2));
 void addInt(void* x1, void* x2);
 void addDouble(void* x1, void* x2);
 void addVec3(void* x1, void* x2);
+void coord2Dot(coord* connections, int n, int process);
 
 #endif
