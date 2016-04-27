@@ -16,18 +16,7 @@
 \maketitle
 
 \section{Introduction}
-
-\textbf{Data stuff and "what's the point"}
-
-\textbf{Ally and Ryan}
-
-Data stuff from proposal:
-
-Our principal dataset is available from the University of Florida Sparse Matrix Collection [1]. We will be partitioning several graphs from this dataset to show that our algorithm is robust and stable. We also plan to include a brain connectivity matrix to see how our algorithm cooperates with a large matrix with real anatomical data [2]. 
-
-Goals stuff from proposal:
-
-With this project, we aim to partition an undirected graph using the Lanzcos algorithm [3] to find the second smallest eigenvalues and corresponding eigenvectors. We will test the differences between full reorthogonalization and no reorthogonalization in communication, speed and amount of work. We will also test the differences in the amount of iterations to be performed when using Lanzcos. We would compare from 10 to 160 iterations and compare the quality of the partition. We will be analyzing the graphs using SCIRun visualization to check the correctness of our partitions. 
+A graph is data that is represented with nodes and edges. The nodes are the points of interest and the edges connect and represent the relationship between the nodes. To partition of graph is to divide the graph into smaller components. A good partition is when the number of edges running between separated components is small. In this project, we partitioned an undirected sparse graph using the Lanzcos algorithm [3] to find the second small eigenvalues and corresponding eigenvectors.  The principal dataset is available from the University of Florida Sparse Matrix Collection [1]. We partitioned $x$ different graphs and tested full reorthogonalization and no orthogonalization as well as different amounts of Lanzcos iterations on each graph. We visualized the results using Graphviz visualization software [3].
 
 \section{Description of Algorithm}
 
@@ -49,11 +38,7 @@ With this project, we aim to partition an undirected graph using the Lanzcos alg
 
 http://www.cise.ufl.edu/research/sparse/matrices.
 
-\item David K. Hammond, Yaniv Gur, and Kyle Morgan, "Improving EEG source estimation with DWI-based Anatomical Brain connectivity via sparse representation with cordial graph wavelets."
-
 \item James Demmel, Applied Numerical Linear Algebra, 1996
-
-\item SCI Institute, SCIRun: A Scientific Computing Problem Solving Environment, Scientific Computing and Imaging Institute (SCI), Download from: http://www.scirun.org, 2015
 
 \item Emden R. Gansner and Stephen C. North, "An open graph visualization system and its applications to software engineering", SOFTWARE - PRACTICE AND EXPERIENCE, 2000, 30, 11, 1203--1233, Download from www.graphviz.org
 
