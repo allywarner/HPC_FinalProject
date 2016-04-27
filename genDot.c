@@ -5,11 +5,16 @@
 #include <math.h>
 #include <string.h>
 
+typedef struct _coord{
+    int row;
+    int col;
+}coord;
+
 //Initializes 16 colors. These can be changed to anything and I tried to pick colors that look different enough! More colors can be found at http://www.graphviz.org/doc/info/colors.html if you don't like them!
 char* colors[] = {"black","red","blue","purple","yellow","magenta","brown","green","orange","skyblue1","forestgreen","slateblue1","wheat4","lightpink2","ivory4","cyan"};
 
 //Generates the dot file with either one color or no color, we can easily change this if we are getting a file with several processors worth of information.
-void genDot(char* data){
+void file2Dot(char* data){
     
     //Initializes files
     FILE* dotFile;
@@ -19,24 +24,56 @@ void genDot(char* data){
     readFile = fopen(data,"r");
     dotFile = fopen("dotFile.gv","w");
     
-    //Writes the first line
+    //Writes the first two lines
     fprintf(dotFile,"graph {\n");
     fprintf(dotFile,"node [shape = point]\n");
     
     //Gets rid of the first line in the file we are reading because it does not have connection or processor data
     fscanf(readFile,"%*[^\n]\n",NULL);
     
-    //reads and writes until the end of the read file, writes a color if the input is not 0
+    //reads and writes until the end of the read file, writes a color based on the processor
     int node1,node2,process;
     while(fscanf(readFile,"%d %d %d\n",&node1,&node2,&process) != EOF) {
         fprintf(dotFile,"%d -- %d [style=filled,fillcolor = %s,fixedsize=true,color=%s];\n",node1,node2,colors[process],colors[process]);
     }
-    //writes the last line
+    
+    //Writes the last line
     fprintf(dotFile,"}");
     
-    //closes the files
+    //Closes the files
     fclose(readFile);
     fclose(dotFile);
+}
+
+void coord2Dot(struct coord connections,int process){
+    
+    //Initializes file
+    FILE* dotFile;
+    
+    //Opens new file to write
+    dotFile = fopen("dotFile.gc","w");
+    
+    //Writes the first two lines
+    fprintf(dotFile,"graph {\n");
+    fprintf(dotFile,"node [shape = point]\n");
+    
+    //Gets the amount of coordinates
+    int structLength = sizeof(connections.row);
+    
+    //Writes the file for the length of the struct, writes a color based on the processor
+    int node1,node2;
+    for (int i = 0; i < structLength; i++) {
+        node1 = connections.row(i);
+        node2 = connections.col(i);
+        fprintf(dotFile,"%d -- %d [style=filled,fillcolor = %s,fixedsize=true,color=%s];\n",node1,node2,colors[process],colors[process]);
+    }
+    
+    //Writes the last line
+    fprintf(dotFile,"}");
+    
+    //Closes the file
+    fclose(dotFile);
+    
 }
 
 ////This main is for debugging
