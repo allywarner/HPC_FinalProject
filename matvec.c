@@ -1,6 +1,6 @@
 #include "lanczos.h"
 
-void matvec(coord* A, int* diagonal, int* scanned, double* x, double* result, size_t n, size_t dim) {
+void matvec(coord* A, int* diagonal, int* scanned, int* nodeIndex,double* x, double* result, size_t n, size_t dim) {
 
 unsigned int i;
 int j;
@@ -15,11 +15,11 @@ for(i=0;i<dim;i++){
   for(i=0;i<dim;i++) {
     if(i > 0)
       for(j=0;j<diagonal[i];j++){
-        result[i]-=x[A[scanned[i-1] + j].col-1];
+        result[i]-=x[nodeIndex[A[scanned[i-1] + j].col]];
       }
     else
       for(j=0;j<diagonal[i];j++) {
-        result[i]-=x[A[j].col-1];
+        result[i]-=x[nodeIndex[A[j].col]];
       }
     }
 }

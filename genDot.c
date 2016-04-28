@@ -36,7 +36,7 @@ void file2Dot(char* data){
         if(node1 == node2){
             continue;
         }
-        fprintf(dotFile,"%d -- %d [style=filled,fillcolor = %s,fixedsize=true,color=%s];\n",node1,node2,colors[process],colors[process]);
+        fprintf(dotFile,"%d -- %d [style=filled,fillcolor = %s,color=%s];\n",node1,node2,colors[process],colors[process]);
     }
 
     //Writes the last line
@@ -66,20 +66,35 @@ void coord2Dot(coord* connections, int coordLength, int process){
     //sort coordinates by row
     quicksort(connections,coordLength,sizeof(coord),coordCompare);
 
-    for(i=0;i<coordLength;i+=2)
-      printf("%d %d %d\n", connections[i].row,connections[i].col,process);
+    // for(i=0;i<coordLength;i+=2)
+    //   printf("%d %d %d\n", connections[i].row,connections[i].col,process);
 
     //Writes the file for the length of the struct, writes a color based on the processor
     int node1,node2;
     for (i = 0; i < coordLength; i+=2) {
         node1 = connections[i].row;
         node2 = connections[i].col;
-        fprintf(dotFile,"%d -- %d [style=filled,fillcolor = %s,fixedsize=true,color=%s];\n",node1,node2,colors[process],colors[process]);
+        fprintf(dotFile,"%d -- %d [style=filled,fillcolor = %s,color=%s];\n",node1,node2,colors[process],colors[process]);
     }
 
     //Closes the file
     fclose(dotFile);
 
+}
+
+void node2Dot(int* myNodes, int len, int process) {
+  FILE* dotFile;
+
+  int i;
+
+  //Opens new file to write
+  dotFile = fopen("dotFile.gc","a");
+
+  for(i=0;i<len;i++)
+    fprintf(dotFile,"%d [style=filled, fillcolor=%s, color=%s]\n", myNodes[i],colors[process],colors[process]);
+
+  //Closes the file
+  fclose(dotFile);
 }
 
 int coordCompare (const void* a, const void* b) {

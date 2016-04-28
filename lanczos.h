@@ -13,7 +13,7 @@ typedef struct _coord{
      int col;
 }coord;
 
-void matvec(coord* A, int* diagonal, int* scanned, double* x, double* result,size_t n, size_t dim);
+void matvec(coord* A, int* diagonal, int* scanned, int* nodeIndex,double* x, double* result,size_t n, size_t dim);
 double dot(double* x, double* y, size_t n);
 double norm(double* x, size_t n);
 int eig(double* d, double* e, double* z,size_t n);
@@ -23,6 +23,7 @@ void addInt(void* x1, void* x2);
 void addDouble(void* x1, void* x2);
 void addVec3(void* x1, void* x2);
 void coord2Dot(coord* connections, int n, int process);
+void node2Dot(int* myNodes, int n, int process);
 void quicksort (void* base, size_t num, size_t size,
                     int (*comp)(const void*, const void*));
 int coordCompare (const void* a, const void* b);
