@@ -48,7 +48,7 @@ int main(int argc,char* argv[]) {
   fclose(matrix);
 
   //Initializes file
-  FILE* dotFile;
+  FILE *dotFile, *discarded;
 
   //Opens new file to write
   dotFile = fopen("dotFile.gc","a");
@@ -62,14 +62,35 @@ int main(int argc,char* argv[]) {
   //Closes the file
   fclose(dotFile);
 
-  MPI_Barrier(MPI_COMM_WORLD);
-
   partition(A,dim,N,world_comm);
 
-  MPI_Barrier(MPI_COMM_WORLD);
+
+  discarded = fopen("Matrices/discarded.dat","r");
+
+  coord* disc = (coord*)malloc(sizeof(coord)*N);
+
+  i=0;
+  while(fscanf(discarded,"%d %d\n",&disc[i].row,&disc[i].col) != EOF)
+    i++;
+
+  int disclen=i;
+  //
+  // if (world_rank == 0) {
+  //   for(i=0;i<disclen;i++)
+  //     printf("%d %d\n", disc[i].row,disc[i].col);
+  //   printf("%d\n", disclen);
+  // }
+
+  // quicksort(disc,disclen,sizeof(coord),coordCompare);
+
+  if (world_rank == 0)
+    coord2Dot(disc,disclen,0);
+
 
   //Opens new file to write
   dotFile = fopen("dotFile.gc","a");
+
+
 
   if(world_rank == 0){
     //Writes the last line
@@ -92,6 +113,9 @@ void partition(coord* A, size_t dim, size_t N, MPI_Comm comm ) {
   MPI_Comm_rank(comm, &rank);
   color = rank % 2;
 
+  int world_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD,&world_rank);
+
   unsigned int i, j, l, T_size=ITER;
   int* diagonal = (int*)malloc(sizeof(int)*dim); // #nonzeros specified per row
   int* scanned = (int*)malloc(sizeof(int)*dim);
@@ -112,6 +136,10 @@ void partition(coord* A, size_t dim, size_t N, MPI_Comm comm ) {
     scanned[i] = diagonal[i];
 
   scan(scanned,dim,sizeof(int),addInt);
+
+  // printf("diagonal and scanned: rank %d\n",world_rank);
+  // for(i=0;i<dim;i++)
+  //   printf("%d %d\n", diagonal[i],scanned[i]);
 
   // allocate space for each Krylov space vector
   #pragma omp parallel for
@@ -140,6 +168,7 @@ void partition(coord* A, size_t dim, size_t N, MPI_Comm comm ) {
   for(j=0;j<ITER;j++) {
     matvec(A,diagonal,scanned,q[j],z,N,dim);
     a[j] = dot(q[j],z,dim);
+    // printf("%lf %d %d\n", a[j],j,world_rank);
     #pragma omp parallel for
     for(i=0;i<=j;i++)
       ortho[i] = dot(q[i],z,dim);
@@ -171,7 +200,7 @@ void partition(coord* A, size_t dim, size_t N, MPI_Comm comm ) {
 
     b[j] = norm(z,dim);
     if (b[j] < 1e-13){
-      printf("stopped short of %d iterations\n", ITER);
+      printf("stopped after %d iterations\n", j+1);
       T_size = j+1;
       break;
     }
@@ -180,6 +209,9 @@ void partition(coord* A, size_t dim, size_t N, MPI_Comm comm ) {
       for(i=0;i<dim;i++)
         q[j+1][i] = z[i]/b[j];
   }
+
+
+
   double end = omp_get_wtime();
   printf("time: %lf\n", end-begin);
 
@@ -209,20 +241,17 @@ void partition(coord* A, size_t dim, size_t N, MPI_Comm comm ) {
   for(i=0;i<ITER;i++)
     free(q[i]);
 
-    int world_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD,&world_rank);
-
-  printf("node %d:\n", world_rank);
-  printf("splitter:\n");
-  for(i=0;i<dim;i++)
-    printf("%lf\n", splitter[i]);
-
-  // print eigenvalues
-  printf("eigenvalues: \n\t");
-  for(i=0;i<T_size;i++)
-    printf("%lf\n\t", a[i]);
-  printf("\n");
+  // printf("node %d:\n", world_rank);
+  // printf("splitter:\n");
+  // for(i=0;i<dim;i++)
+  //   printf("%lf\n", splitter[i]);
   //
+  // // print eigenvalues
+  // printf("eigenvalues: \n\t");
+  // for(i=0;i<T_size;i++)
+  //   printf("%lf\n\t", a[i]);
+  // printf("\n");
+
   // printf("A: \n\t");
   // for(i=0;i<N;i++)
   //   printf("%d %d\n\t", A[i].row,A[i].col);
@@ -238,7 +267,7 @@ void partition(coord* A, size_t dim, size_t N, MPI_Comm comm ) {
       AnewCount++;
 
 
-  printf("Anewcount: %d %d\n", AnewCount, world_rank);
+  // printf("Anewcount: %d %d\n", AnewCount, world_rank);
   //
   // #pragma omp parallel for reduction(+:newDim)
   // for(i=0;i<dim;i++)
@@ -249,30 +278,36 @@ void partition(coord* A, size_t dim, size_t N, MPI_Comm comm ) {
 
 
   coord* Anew = (coord*)malloc(sizeof(coord)*AnewCount);
+  FILE* discarded;
 
-  omp_lock_t writelock;
-  omp_init_lock(&writelock);
+  discarded = fopen("Matrices/discarded.dat","a");
 
   AnewCount=0;
 
-  #pragma omp parallel for
+  // don't parallelize because it causes more work in the end cause you have to sort
   for(j=0;j<N;j++)
     if(color == 0 && splitter[A[j].row-1] >= 0 && splitter[A[j].col-1] >= 0){
-      omp_set_lock(&writelock);
       Anew[AnewCount].row = A[j].row;
       Anew[AnewCount].col = A[j].col;
       AnewCount++;
-      omp_unset_lock(&writelock);
     }
     else if(color == 1 && splitter[A[j].row-1] < 0 && splitter[A[j].col-1] < 0){
-      omp_set_lock(&writelock);
       Anew[AnewCount].row = A[j].row;
       Anew[AnewCount].col = A[j].col;
       AnewCount++;
-      omp_unset_lock(&writelock);
     }
+    else if(((splitter[A[j].row-1] < 0 && splitter[A[j].col-1] >= 0) ||
+                            (splitter[A[j].row-1] >= 0 && splitter[A[j].col-1] < 0)) )
+        if (rank == 0)
+          fprintf(discarded,"%d %d\n", A[j].row,A[j].col);
 
-  omp_destroy_lock(&writelock);
+    fclose(discarded);
+
+    // printf("Anew: \n\t");
+    // for(i=0;i<AnewCount;i++)
+    //   printf("%d %d\n\t", Anew[i].row,Anew[i].col);
+    // printf("\n");
+
 
   FILE* fp;
 
@@ -290,19 +325,15 @@ void partition(coord* A, size_t dim, size_t N, MPI_Comm comm ) {
   // getchar();
 
 
-    // MPI_Comm_split(comm, color, rank, &new_comm);
-    // MPI_Comm_size(new_comm,&new_size);
-    // if(new_size > 1)
-    //   partition(Anew,dim,AnewCount,new_comm);
-    // else{
-    //
-    //   // coord2Dot(Anew,AnewCount,world_rank);
-    //   // printf("node %d nodes:\n", world_rank);
-    //   // for(i=0;i<AnewCount;i++)
-    //   //   printf("%d\n", Anew[i].row);
-    // }
+    MPI_Comm_split(comm, color, rank, &new_comm);
+    MPI_Comm_size(new_comm,&new_size);
+    if(new_size > 1)
+      partition(Anew,dim,AnewCount,new_comm);
+    else{
+      coord2Dot(Anew,AnewCount,world_rank+1);
+    }
 
-  printf("-----------------------------\n");
+  // printf("-----------------------------\n");
 
   free(Anew);
   free(splitter);

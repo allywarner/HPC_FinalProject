@@ -5,12 +5,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "Matrices/quicksort.h"
-
-typedef struct _coord{
-    int row;
-    int col;
-}coord;
+#include "lanczos.h"
 
 int coordCompare (const void* a, const void* b);
 
@@ -70,6 +65,9 @@ void coord2Dot(coord* connections, int coordLength, int process){
 
     //sort coordinates by row
     quicksort(connections,coordLength,sizeof(coord),coordCompare);
+
+    for(i=0;i<coordLength;i+=2)
+      printf("%d %d %d\n", connections[i].row,connections[i].col,process);
 
     //Writes the file for the length of the struct, writes a color based on the processor
     int node1,node2;

@@ -23,5 +23,8 @@ void addInt(void* x1, void* x2);
 void addDouble(void* x1, void* x2);
 void addVec3(void* x1, void* x2);
 void coord2Dot(coord* connections, int n, int process);
+void quicksort (void* base, size_t num, size_t size,
+                    int (*comp)(const void*, const void*));
+int coordCompare (const void* a, const void* b);
 
 #endif
