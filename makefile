@@ -1,4 +1,4 @@
-objects = matvec.o eig.o scan.o partition.o genDot.o
+objects = matvec.o eig.o scan.o partition.o genDot.o quicksort.o
 
 partition: $(objects)
 	mpicc -o partition $(objects) -lm -lblas -llapack -fopenmp
@@ -15,6 +15,8 @@ scan.o: scan.c
 	cc -c scan.c -fopenmp
 genDot.o: genDot.c
 	cc -c genDot.c -fopenmp
+quicksort.o: Matrices/quicksort.c
+	cc -c Matrices/quicksort.c -fopenmp
 
 .PHONY: clean
 clean:

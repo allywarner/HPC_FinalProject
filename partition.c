@@ -228,7 +228,7 @@ void partition(coord* A, size_t dim, size_t N, MPI_Comm comm ) {
   //   printf("%d %d\n\t", A[i].row,A[i].col);
   // printf("\n");
 
-  unsigned int AnewCount=0, newDim=0;
+  unsigned int AnewCount=0;
 
   #pragma omp parallel for reduction(+:AnewCount)
   for(i=0;i<N;i++)
@@ -236,6 +236,9 @@ void partition(coord* A, size_t dim, size_t N, MPI_Comm comm ) {
       AnewCount++;
     else if (color == 1 && splitter[A[i].row-1] < 0 && splitter[A[i].col-1] < 0)
       AnewCount++;
+
+
+  printf("Anewcount: %d %d\n", AnewCount, world_rank);
   //
   // #pragma omp parallel for reduction(+:newDim)
   // for(i=0;i<dim;i++)
@@ -284,20 +287,20 @@ void partition(coord* A, size_t dim, size_t N, MPI_Comm comm ) {
 
   fclose(fp);
 
-  getchar();
+  // getchar();
 
 
-    MPI_Comm_split(comm, color, rank, &new_comm);
-    MPI_Comm_size(new_comm,&new_size);
-    if(new_size > 1)
-      partition(Anew,dim,AnewCount,new_comm);
-    else{
-
-      // coord2Dot(Anew,AnewCount,world_rank);
-      // printf("node %d nodes:\n", world_rank);
-      // for(i=0;i<AnewCount;i++)
-      //   printf("%d\n", Anew[i].row);
-    }
+    // MPI_Comm_split(comm, color, rank, &new_comm);
+    // MPI_Comm_size(new_comm,&new_size);
+    // if(new_size > 1)
+    //   partition(Anew,dim,AnewCount,new_comm);
+    // else{
+    //
+    //   // coord2Dot(Anew,AnewCount,world_rank);
+    //   // printf("node %d nodes:\n", world_rank);
+    //   // for(i=0;i<AnewCount;i++)
+    //   //   printf("%d\n", Anew[i].row);
+    // }
 
   printf("-----------------------------\n");
 

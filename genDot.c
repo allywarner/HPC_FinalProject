@@ -5,12 +5,14 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <quicksort.h>
+#include "Matrices/quicksort.h"
 
 typedef struct _coord{
     int row;
     int col;
 }coord;
+
+int coordCompare (const void* a, const void* b);
 
 //Initializes 16 colors. These can be changed to anything and I tried to pick colors that look different enough! More colors can be found at http://www.graphviz.org/doc/info/colors.html if you don't like them!
 char* colors[] = {"black","red","blue","purple","yellow","magenta","brown","green","orange","skyblue1","forestgreen","slateblue1","wheat4","lightpink2","ivory4","cyan"};
@@ -56,20 +58,21 @@ void coord2Dot(coord* connections, int coordLength, int process){
 
     //Opens new file to write
     dotFile = fopen("dotFile.gc","a");
-    
-    for(int i = 0,i < coordLength,i++){
+    int i;
+
+    for(i = 0;i < coordLength;i++){
         if(connections[i].row < connections[i].col){
             int temp = connections[i].row;
             connections[i].row = connections[i].col;
             connections[i].col = temp;
         }
     }
-    
+
     //sort coordinates by row
     quicksort(connections,coordLength,sizeof(coord),coordCompare);
 
     //Writes the file for the length of the struct, writes a color based on the processor
-    int node1,node2,i;
+    int node1,node2;
     for (i = 0; i < coordLength; i+=2) {
         node1 = connections[i].row;
         node2 = connections[i].col;
@@ -79,6 +82,26 @@ void coord2Dot(coord* connections, int coordLength, int process){
     //Closes the file
     fclose(dotFile);
 
+}
+
+int coordCompare (const void* a, const void* b) {
+  struct point {
+    int x;
+    int y;
+  };
+
+  if ((*(struct point*)a).x > (*(struct point*)b).x)
+    return 1;
+  if ((*(struct point*)a).x == (*(struct point*)b).x) {
+    if ((*(struct point*)a).y > (*(struct point*)b).y)
+      return 1;
+    else if ((*(struct point*)a).y == (*(struct point*)b).y)
+      return 0;
+    else
+      return -1;
+  }
+  else /*(a < b)*/
+    return -1;
 }
 
 // ////This main is for debugging
