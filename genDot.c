@@ -1,9 +1,11 @@
+
 //Generates the dot file to view in graphviz
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <quicksort.h>
 
 typedef struct _coord{
     int row;
@@ -34,6 +36,9 @@ void file2Dot(char* data){
     //reads and writes until the end of the read file, writes a color based on the processor
     int node1,node2,process;
     while(fscanf(readFile,"%d %d %d\n",&node1,&node2,&process) != EOF) {
+        if(node1 == node2){
+            continue;
+        }
         fprintf(dotFile,"%d -- %d [style=filled,fillcolor = %s,fixedsize=true,color=%s];\n",node1,node2,colors[process],colors[process]);
     }
 
@@ -45,16 +50,27 @@ void file2Dot(char* data){
     fclose(dotFile);
 }
 
-void coord2Dot(coord* connections, int n, int process){
+void coord2Dot(coord* connections, int coordLength, int process){
 
     FILE* dotFile;
 
     //Opens new file to write
     dotFile = fopen("dotFile.gc","a");
+    
+    for(int i = 0,i < coordLength,i++){
+        if(connections[i].row < connections[i].col){
+            int temp = connections[i].row;
+            connections[i].row = connections[i].col;
+            connections[i].col = temp;
+        }
+    }
+    
+    //sort coordinates by row
+    quicksort(connections,coordLength,sizeof(coord),coordCompare);
 
     //Writes the file for the length of the struct, writes a color based on the processor
     int node1,node2,i;
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < coordLength; i+=2) {
         node1 = connections[i].row;
         node2 = connections[i].col;
         fprintf(dotFile,"%d -- %d [style=filled,fillcolor = %s,fixedsize=true,color=%s];\n",node1,node2,colors[process],colors[process]);
