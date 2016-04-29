@@ -6,6 +6,7 @@ void partition(coord* A, int* myNodes, int* nodeIndex,size_t dim, size_t N, MPI_
 
 int main(int argc,char* argv[]) {
 
+  //initialize MPI environment
   MPI_Init(&argc,&argv);
   MPI_Comm world_comm = MPI_COMM_WORLD;
   int world_rank;
@@ -39,12 +40,17 @@ int main(int argc,char* argv[]) {
   }
   dim = row;
 
-  coord* A = (coord*)malloc(sizeof(coord)*N); //ajacency matrix coordinates
+  //ajacency matrix coordinates
+  coord* A = (coord*)malloc(sizeof(coord)*N);
 
   //scan matrix coordinates and store in memory
   for(i=0;i<N;i++)
     fscanf(matrix,"%d %d\n",&A[i].row,&A[i].col);
 
+  fclose(matrix);
+
+
+  //arrays needed to reference nodes
   int* myNodes = (int*)malloc(sizeof(int)*dim);
   int* nodeIndex = (int*)malloc(sizeof(int)*(dim+1));
 
@@ -54,15 +60,7 @@ int main(int argc,char* argv[]) {
     nodeIndex[myNodes[i]] = i;
   }
 
-  // if(world_rank == 0){
-  // printf("node index:\n");
-  // for(i=1;i<=dim;i++)
-  //   printf("%d\n", nodeIndex[i]);
-  // }
-
-  fclose(matrix);
-
-  //Initializes file
+  //Initialize file
   FILE *dotFile, *discarded;
 
   //Opens new file to write
@@ -77,42 +75,34 @@ int main(int argc,char* argv[]) {
   //Closes the file
   fclose(dotFile);
 
+  // partition the graph that we just read in
   partition(A,myNodes,nodeIndex,dim,N,world_comm);
 
+  // barrier so that nobody tries to finish of the dot file while other threads are still working
   MPI_Barrier(MPI_COMM_WORLD);
 
+
+  // open and read list of discarded edges
   discarded = fopen("Matrices/discarded.dat","r");
-
   coord* disc = (coord*)malloc(sizeof(coord)*N);
-
   int disclen=0;
   while(fscanf(discarded,"%d %d\n",&disc[disclen].row,&disc[disclen].col) != EOF){
     disclen++;
   }
 
-  // printf("%d\n", disclen);
-  //
-  // if(world_rank == 0)
-  // for(i=0;i<disclen;i++)
-  //   printf("%d %d\n", disc[i].row,disc[i].col);
-
+  // write those edges to the dotFile
   if (world_rank == 0)
     coord2Dot(disc,disclen,0);
 
-
-  //Opens new file to write
+  // finish off dotFile
   dotFile = fopen("dotFile.gc","a");
-
-
-  if(world_rank == 0){
-    //Writes the last line
+  if(world_rank == 0)
     fprintf(dotFile,"}");
-  }
 
-  //Closes the file
+
   fclose(dotFile);
 
-
+  //free memory
   free(myNodes);
   free(nodeIndex);
   free(A);
@@ -121,33 +111,38 @@ int main(int argc,char* argv[]) {
 
 void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, MPI_Comm comm ) {
 
-  int rank, color, new_size;
+  //figure out comm info
+  int rank, color, size, new_size;
   MPI_Comm new_comm;
   MPI_Comm_rank(comm, &rank);
+  MPI_Comm_size(comm, &size);
   color = rank % 2;
-
   int world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD,&world_rank);
 
+  //declare memory locations that we'll need
   unsigned int i, j, l, T_size=ITER;
-  int* diagonal = (int*)malloc(sizeof(int)*dim); // #nonzeros specified per row
-  int* scanned = (int*)malloc(sizeof(int)*dim);
+  int* diagonal = (int*)malloc(sizeof(int)*dim); // #n onzeros specified per row
+  int* scanned = (int*)malloc(sizeof(int)*dim);  // prefix sum of the diagonal
   double* q[ITER]; //Krylov space basis matrix
   double* z = (double*)malloc(sizeof(double)*dim); //new vector in each lanczos iteration
   double a[ITER]; // diagonal of lanczos matrix
   double b[ITER]; // subdiagonal of lanczos matrix
 
+  //initialize diagonal to zero
   #pragma omp parallel for
   for(i=0;i<dim;i++)
     diagonal[i] = 0;
 
+  //count the number of nonzeros in each row and assign to diagonal
+  //not independent... will take some work to parallelize
   for(i=0;i<N;i++)
     diagonal[nodeIndex[A[i].row]]+=1;
 
+  // scan the diagonal so we can use it to parallelize matvec
   #pragma omp parallel for
   for(i=0;i<dim;i++)
     scanned[i] = diagonal[i];
-
   scan(scanned,dim,sizeof(int),addInt);
 
   // allocate space for each Krylov space vector
@@ -163,6 +158,7 @@ void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, MPI_Co
     q[0][i] = (double)rand()/(double)RAND_MAX * 100;
   }
 
+  //broadcast initial guess to all other nodes
   MPI_Bcast(&q[0][0],dim, MPI_DOUBLE, 0, comm);
 
   // normalize initial guess
@@ -228,11 +224,12 @@ void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, MPI_Co
   free(z);
 
   double* V = (double*)malloc(sizeof(double)*ITER*ITER);// blank workspace for eig function
-  double* splitter = (double*)malloc(sizeof(double)*dim);
+  double* splitter = (double*)malloc(sizeof(double)*dim);//second largest eigenvector
 
   // compute eigenvalues and eigenvectors of lanczos matrix
   eig(a,b,V,T_size);
 
+  //compute second largest eigenvector of the laplacian matrix
   #pragma omp parallel for
   for(i=0;i<dim;i++)
     splitter[i] = 0;
@@ -249,24 +246,11 @@ void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, MPI_Co
   for(i=0;i<ITER;i++)
     free(q[i]);
 
-  // printf("node %d:\n", world_rank);
-  // printf("splitter:\n");
-  // for(i=0;i<dim;i++)
-  //   printf("%lf\n", splitter[i]);
-  //
-  // // print eigenvalues
-  // printf("eigenvalues: \n\t");
-  // for(i=0;i<T_size;i++)
-  //   printf("%lf\n\t", a[i]);
-  // printf("\n");
 
-  // printf("A: \n\t");
-  // for(i=0;i<N;i++)
-  //   printf("%d %d\n\t", A[i].row,A[i].col);
-  // printf("\n");
-
+  //use splitter to split the graph among nodes
   unsigned int AnewCount=0, newDim=0;
 
+  //count the numer of edges in the new matrix
   #pragma omp parallel for reduction(+:AnewCount)
   for(i=0;i<N;i++)
     if (color == 0 && splitter[nodeIndex[A[i].row]] >= 0 && splitter[nodeIndex[A[i].col]] >= 0)
@@ -274,15 +258,15 @@ void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, MPI_Co
     else if (color == 1 && splitter[nodeIndex[A[i].row]] < 0 && splitter[nodeIndex[A[i].col]] < 0)
       AnewCount++;
 
-  // printf("%d %d\n", world_rank,AnewCount);
-
+  //allocate space for the new matrix
   coord* Anew = (coord*)malloc(sizeof(coord)*AnewCount);
+
+  // open up file to store discarded edges
   FILE* discarded;
-
   discarded = fopen("Matrices/discarded.dat","a");
-
   AnewCount=0;
 
+  // sort edges between odd and even nodes and discarded edges
   // don't parallelize because it causes more work in the end cause you have to sort
   for(j=0;j<N;j++)
     if(color == 0 && splitter[nodeIndex[A[j].row]] >= 0 && splitter[nodeIndex[A[j].col]] >= 0){
@@ -304,6 +288,7 @@ void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, MPI_Co
 
     fclose(discarded);
 
+    // count the new dimension of the resulting matrix
     for(i=0;i<dim;i++)
       if (color == 0 && splitter[i] >= 0) {
         myNodes[newDim] = myNodes[i];
@@ -314,48 +299,28 @@ void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, MPI_Co
         newDim++;
       }
 
+    // assign new node index based on the nodes you get
     #pragma omp parallel for
     for(i=0;i<newDim;i++)
       nodeIndex[myNodes[i]] = i;
 
-    // printf("Rank: %d My nodes:\n", world_rank);
-    // for(i=0;i<newDim;i++)
-    //   printf("%d\n", myNodes[i]);
-    //
-    //
-    // printf("Anew: count=%d\n\t",AnewCount);
-    // for(i=0;i<AnewCount;i++)
-    //   printf("%d %d\n\t", Anew[i].row,Anew[i].col);
-    // printf("\n");
-
-
-  FILE* fp;
-
-  if(color == 0)
-    fp = fopen("Matrices/Aplus.dat","w");
-  else
-    fp = fopen("Matrices/Aminus.dat","w");
-
-  fprintf(fp,"%d %d %d\n", newDim,newDim,AnewCount);
-  for(i=0;i<AnewCount;i++)
-    fprintf(fp,"%d %d\n",Anew[i].row,Anew[i].col);
-
-  fclose(fp);
-
-  // getchar();
-
-
+    //split the comm
     MPI_Comm_split(comm, color, rank, &new_comm);
     MPI_Comm_size(new_comm,&new_size);
+
+    //if the comm size is bigger than 1 recurse
     if(new_size > 1)
       partition(Anew,myNodes,nodeIndex,newDim,AnewCount,new_comm);
-    else{
-      coord2Dot(Anew,AnewCount,world_rank+1);
-      node2Dot(myNodes,newDim,world_rank+1);
+    else{ //otherwise print your output to the dotFile
+      int k;
+      for(k=0;k<size;k++){
+        if (rank == k){
+          coord2Dot(Anew,AnewCount,world_rank+1);
+          node2Dot(myNodes,newDim,world_rank+1);
+        }
+        MPI_Barrier(comm);
+      }
     }
-
-  // printf("-----------------------------\n");
-
   free(Anew);
   free(splitter);
 }
