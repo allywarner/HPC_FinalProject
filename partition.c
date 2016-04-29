@@ -73,6 +73,8 @@ int main(int argc,char* argv[]) {
   if(discarded)
     remove("Matrices/discarded.dat");
 
+  MPI_Barrier(MPI_COMM_WORLD);
+
   //creates files to write
   dotFile = fopen("dotFile.gc","a");
   discarded = fopen("Matrices/discarded.dat","a");
