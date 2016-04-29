@@ -131,7 +131,8 @@ void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, MPI_Co
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &size);
   color = rank % 2;
-  int world_rank;
+  int world_rank,world_size;
+  MPI_Comm_size(MPI_COMM_WORLD,&world_size);
   MPI_Comm_rank(MPI_COMM_WORLD,&world_rank);
 
   //declare memory locations that we'll need
@@ -327,12 +328,12 @@ void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, MPI_Co
       partition(Anew,myNodes,nodeIndex,newDim,AnewCount,new_comm);
     else{ //otherwise print your output to the dotFile
       int k;
-      for(k=0;k<size;k++){
+      for(k=0;k<world_size;k++){
         if (rank == k){
           coord2Dot(Anew,AnewCount,world_rank+1);
           node2Dot(myNodes,newDim,world_rank+1);
         }
-        MPI_Barrier(comm);
+        MPI_Barrier(MPI_COMM_WORLD);
       }
     }
   free(Anew);
