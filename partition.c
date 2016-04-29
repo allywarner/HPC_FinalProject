@@ -63,8 +63,20 @@ int main(int argc,char* argv[]) {
   //Initialize file
   FILE *dotFile, *discarded;
 
-  //Opens new file to write
+  //Opens new file to read
+  dotFile = fopen("dotFile.gc","r");
+  discarded = fopen("Matrices/discarded.dat","r");
+
+  //if the files exist delete them
+  if(dotFile)
+    remove("dotFile.gc");
+  if(discarded)
+    remove("Matrices/discarded.dat");
+
+  //creates files to write
   dotFile = fopen("dotFile.gc","a");
+  discarded = fopen("Matrices/discarded.dat","a");
+
 
   if(world_rank == 0) {
     //Writes the first two lines
