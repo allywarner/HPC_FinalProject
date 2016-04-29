@@ -1,8 +1,8 @@
 #include "lanczos.h"
 #include <mpi.h>
-#define ITER 120
+// #define ITER 120
 
-void partition(coord* A, int* myNodes, int* nodeIndex,size_t dim, size_t N, MPI_Comm comm);
+void partition(coord* A, int* myNodes, int* nodeIndex,size_t dim, size_t N, unsigned int ITER, int orth, MPI_Comm comm);
 
 int main(int argc,char* argv[]) {
 
@@ -12,8 +12,12 @@ int main(int argc,char* argv[]) {
   int world_rank;
   MPI_Comm_rank(world_comm, &world_rank);
 
-  int i, row, col, N, dim;
+  int i, row, col, N, dim, orth;
+  unsigned int ITER;
   char mstr[100];
+
+  ITER = atoi(argv[2]);
+  orth = atoi(argv[3]);
 
   // read name of matrix from arg list
   if (argc > 1)
@@ -90,7 +94,7 @@ int main(int argc,char* argv[]) {
   fclose(dotFile);
 
   // partition the graph that we just read in
-  partition(A,myNodes,nodeIndex,dim,N,world_comm);
+  partition(A,myNodes,nodeIndex,dim,N,ITER,orth,world_comm);
 
   // barrier so that nobody tries to finish of the dot file while other threads are still working
   MPI_Barrier(MPI_COMM_WORLD);
@@ -123,7 +127,7 @@ int main(int argc,char* argv[]) {
   MPI_Finalize();
 }
 
-void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, MPI_Comm comm ) {
+void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, unsigned int ITER, int orth, MPI_Comm comm ) {
 
   //figure out comm info
   int rank, color, size, new_size;
@@ -188,10 +192,12 @@ void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, MPI_Co
   for(j=0;j<ITER;j++) {
     matvec(A,diagonal,scanned,nodeIndex,q[j],z,N,dim);
     a[j] = dot(q[j],z,dim);
+
+    if(orth){
+    //full reorthogonalization
     #pragma omp parallel for
     for(i=0;i<=j;i++)
       ortho[i] = dot(q[i],z,dim);
-
     if(j > 0) {
       for(l=0;l<=j;l++) {
         #pragma omp parallel for
@@ -206,16 +212,25 @@ void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, MPI_Co
         for(i=0;i<dim;i++)
           z[i] -= ortho[l]*q[l][i];
       }
+    } else {
+        #pragma omp for
+        for(i=0;i<dim;i++)
+          z[i] = z[i] - a[j]*q[j][i];
+        }
+      } else if (!orth){
+          if(j>0){
+            // no reorthogonalization
+            #pragma omp parallel for
+            for(i=0;i<dim;i++)
+              z[i] = z[i] - a[j]*q[j][i] - b[j-1]*q[j-1][i];
+          } else {
+              #pragma omp for
+              for(i=0;i<dim;i++)
+                z[i] = z[i] - a[j]*q[j][i];
+              }
+            }
 
-        //no reorthogonalization
-          // z[i] = z[i] - a[j]*q[j][i] - b[j-1]*q[j-1][i];
 
-
-      } else {
-          #pragma omp for
-          for(i=0;i<dim;i++)
-            z[i] = z[i] - a[j]*q[j][i];
-      }
 
     b[j] = norm(z,dim);
     if (b[j] < 1e-13){
@@ -325,7 +340,7 @@ void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, MPI_Co
 
     //if the comm size is bigger than 1 recurse
     if(new_size > 1)
-      partition(Anew,myNodes,nodeIndex,newDim,AnewCount,new_comm);
+      partition(Anew,myNodes,nodeIndex,newDim,AnewCount,ITER,orth,new_comm);
     else{ //otherwise print your output to the dotFile
       int k;
       for(k=0;k<world_size;k++){
