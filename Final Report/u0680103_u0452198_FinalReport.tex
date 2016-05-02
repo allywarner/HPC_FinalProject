@@ -1,11 +1,11 @@
 \documentclass[11pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
 \usepackage{geometry}
 \usepackage{amsmath}              		% See geometry.pdf to learn the layout options. There are lots.
-\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
+\geometry{letterpaper}                   		% ... or a4paper or a5paper or ...
 %\geometry{landscape}                		% Activate for for rotated page geometry
 %\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
 \usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
-								% TeX will automatically convert eps --> pdf in pdflatex		
+								% TeX will automatically convert eps --> pdf in pdflatex
 \usepackage{amssymb}
 
 \title{CS 6320 - Project Proposal}
@@ -19,8 +19,39 @@
 A graph is data that is represented with nodes and edges. The nodes are the points of interest and the edges connect and represent the relationship between the nodes. To partition of graph is to divide the graph into smaller components. A good partition is when the number of edges running between separated components is small. In this project, we partitioned an undirected sparse graph using the Lanzcos algorithm [3] to find the second small eigenvalues and corresponding eigenvectors.  The principal dataset is available from the University of Florida Sparse Matrix Collection [1]. We partitioned $x$ different graphs and tested full reorthogonalization and no orthogonalization as well as different amounts of Lanzcos iterations on each graph. We visualized the results using Graphviz visualization software [3].
 
 \section{Description of Algorithm}
+The principle idea behind our approach to graph partitioning is recursive bisection. We bisect the graph and then recursively bisect each subgraph until there is one subgraph per compute node of the compute cluster partition on which we run our code. Here is an outline of the algorithm.
 
-\textbf{Ryan}
+\begin{enumerate}
+	\item Read the matrix from a file in the Matrix Market format and store in memory. This format stores one line for each pair of nodes between which an edge exists. If the matrix is symmetric (as in our case) then it only stores the lower diagonal.
+
+	\item Perform a fixed number of Lanczos iterations to compute the second smallest eigenvalue and corresponding eigenvector of the Laplacian matrix corresponding with our graph. The main step of the Lanczos algorithm, the matrix-vector product, is computed by a ``Black Box'' funtion that accepts as input the adjacency matrix of the graph to be partitioned, and the vector to be used in the product. The matrix-vector product of the laplacian matrix and the vector is then computed in parallel.
+
+	\item The Lanczos iterations produce a tridiagonal matrix whose eigenvalues are approximations of the eigenvalues of the laplacian matrix.  We use the Lapack dsteqr function to compute the eigenvalues and eigenvectors of this matrix, and then compute the Ritz vector corresponding to the second smallest eigenvalue.
+
+	\item The next step is to partition the graph. As per the discussion in class, the eigenvector corresponding to the second smallest eigenvalue of the Laplacian matrix can be used to partition the graph in such a way as to minimize the number of edges crossing the partition.
+
+	\item Finally, we recurse and repeat steps 2-5 on each subgraph. Recursion stops once each compute node has a subgraph and no other compute node is assigned the same subgraph.
+
+	\item Each compute node prints its nodes and edges to a dot file for visualization using graphviz.
+\end{enumerate}
+
+\subsection{Parallelization}
+There are two main ways in which we have parallelized this application. The first is by parallelizing the Matrix-Vector product. We did this from a shared memory perspective using OpenMP. The second way was by parallelizing the recursion step. We did this from a distributed memory perspective using MPI, each compute node being assigned to one of the two subgraphs generated at each step.
+
+Parallelization of the matrix vector product is straighforward in principle. Each entry of the resulting vector can be computed independently from the others and this can be easly implemented as a CREW procedure. In practice this was a little more difficult due to the minimal storage format of the input matrix. To be able to do the computation in parallel it was necessary to count the number of non-zero entries per row \emph{a priori} and then do a prefix sum on this vector to be able to assign independent chuncks of work to each processor. In the end this step required O(n) work and storage, which is optimal. In addition to parallelizing the Matrix-Vector product, we also parallelized any other independent computations that we could identify.
+
+The distributed memory parallelization that we implemented is admittedly simple and inefficient. Essentially each compute node calculates the Ritz vector individually in each iteration, and then determines which graph nodes to keep for the next iteration. This results in $\log(p)$ steps to partition the graph where p is the number of compute nodes.
+
+\subsection{Possible improvements}
+There are several possible improvements to make to the algorithm. In particular, we note the following:
+
+\begin{enumerate}
+	\item The biggest improvement that could be made is that rather than having each compute node calculate the Ritz vector individually, the work and memory storage could be split up among nodes to do this in parallel.  Note that for simplicity we elected to parallelize the calculation of the Ritz vectors only from a shared memory perspective.
+
+	\item The second biggest improvement to make would be to use selective reorthogonalization for the Lanczos iteration rather than full reorthogonalization. Since we only needed the second smallest Ritz value, the algorithm converges quickly and full reorthogonalization isn't terribly exensive. This could be improved by reorthogonalizing only when necessary.
+
+	\item There were a couple of minor areas where more parallelization could have been extracted, such as the loop to assign graph nodes to each compute node after the Ritz vector is calculated. These improvements however would have very little effect on the overall performance so for lack of time we decided not to implement them.
+\end{enumerate}
 
 \section{Testing \& Analysis}
 
@@ -34,7 +65,7 @@ A graph is data that is represented with nodes and edges. The nodes are the poin
 
 \begin{enumerate}
 
-\item The University of Florida Sparse Matrix Collection, T. A. Davis and Y. Hu, ACM Transactions on Mathematical Software, Vol 38, Issue 1, 2011, pp 1:1 - 1:25. 
+\item The University of Florida Sparse Matrix Collection, T. A. Davis and Y. Hu, ACM Transactions on Mathematical Software, Vol 38, Issue 1, 2011, pp 1:1 - 1:25.
 
 http://www.cise.ufl.edu/research/sparse/matrices.
 
