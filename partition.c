@@ -7,6 +7,8 @@ void partition(coord* A, int* myNodes, int* nodeIndex,size_t dim, size_t N, unsi
 int main(int argc,char* argv[]) {
 
   //initialize MPI environment
+  int world_size;
+  MPI_Comm_size(MPI_COMM_WORLD,&world_size);
   MPI_Init(&argc,&argv);
   MPI_Comm world_comm = MPI_COMM_WORLD;
   int world_rank;
