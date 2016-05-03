@@ -1,16 +1,3 @@
-%%MatrixMarket matrix coordinate real symmetric
-%-------------------------------------------------------------------------------
-% UF Sparse Matrix Collection, Tim Davis
-% http://www.cise.ufl.edu/research/sparse/matrices/GHS_indef/ncvxqp9
-% name: GHS_indef/ncvxqp9
-% [Gould, Hu, & Scott: KKT matrix - nonconvex QP (CUTEr)]
-% id: 1243
-% date: 1994
-% author: N. Gould
-% ed: N. Gould
-% fields: name title A id date author ed kind
-% kind: optimization problem
-%-------------------------------------------------------------------------------
 16554 16554 31547
 1 1 1.4121783096552671
 9055 1 1
