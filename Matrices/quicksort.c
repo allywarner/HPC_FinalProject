@@ -2,6 +2,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
+#include "quicksort.h"
 
 void quicksort (void* base, size_t num, size_t size,
                   int (*comp)(const void*, const void*))
