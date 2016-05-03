@@ -6,10 +6,11 @@ void partition(coord* A, int* myNodes, int* nodeIndex,size_t dim, size_t N, unsi
 
 int main(int argc,char* argv[]) {
 
+
   //initialize MPI environment
   int world_size;
-  MPI_Comm_size(MPI_COMM_WORLD,&world_size);
   MPI_Init(&argc,&argv);
+  MPI_Comm_size(MPI_COMM_WORLD,&world_size);
   MPI_Comm world_comm = MPI_COMM_WORLD;
   int world_rank;
   MPI_Comm_rank(world_comm, &world_rank);
@@ -55,7 +56,6 @@ int main(int argc,char* argv[]) {
 
   fclose(matrix);
 
-
   //arrays needed to reference nodes
   int* myNodes = (int*)malloc(sizeof(int)*dim);
   int* nodeIndex = (int*)malloc(sizeof(int)*(dim+1));
@@ -66,16 +66,17 @@ int main(int argc,char* argv[]) {
     nodeIndex[myNodes[i]] = i;
   }
 
+
   //Initialize file
   FILE *dotFile, *discarded;
 
   //Opens new file to read
-  dotFile = fopen("dotFile.gv","r");
+  // dotFile = fopen("dotFile.gv","r");
   discarded = fopen("Matrices/discarded.dat","r");
 
   //if the files exist delete them
-  if(dotFile)
-    remove("dotFile.gv");
+  // if(dotFile)
+  //   remove("dotFile.gv");
   if(discarded)
     remove("Matrices/discarded.dat");
 
@@ -85,7 +86,7 @@ int main(int argc,char* argv[]) {
   char filename[16];
   sprintf(filename,"dotFile_%d_%d_%d.gv",ITER,orth,world_size);
   dotFile = fopen(filename,"a");
-  discarded = fopen("Matrices/discarded.dat","a");
+  // discarded = fopen("Matrices/discarded.dat","a");
 
 
   if(world_rank == 0) {
