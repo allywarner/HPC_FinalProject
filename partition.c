@@ -81,7 +81,7 @@ int main(int argc,char* argv[]) {
 
   //creates files to write
   char filename[16];
-  sprintf(filename,"dotFile_%d_%d_%d.gv",ITER,orth,myNodes);
+  sprintf(filename,"dotFile_%d_%d_%d.gv",ITER,orth,world_size);
   dotFile = fopen(filename,"a");
   discarded = fopen("Matrices/discarded.dat","a");
 
