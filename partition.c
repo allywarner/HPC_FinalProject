@@ -68,19 +68,19 @@ int main(int argc,char* argv[]) {
   FILE *dotFile, *discarded;
 
   //Opens new file to read
-  dotFile = fopen("dotFile.gc","r");
+  dotFile = fopen("dotFile.gv","r");
   discarded = fopen("Matrices/discarded.dat","r");
 
   //if the files exist delete them
   if(dotFile)
-    remove("dotFile.gc");
+    remove("dotFile.gv");
   if(discarded)
     remove("Matrices/discarded.dat");
 
   MPI_Barrier(MPI_COMM_WORLD);
 
   //creates files to write
-  dotFile = fopen("dotFile.gc","a");
+  dotFile = fopen("dotFile.gv","a");
   discarded = fopen("Matrices/discarded.dat","a");
 
 
@@ -113,7 +113,7 @@ int main(int argc,char* argv[]) {
     coord2Dot(disc,disclen,0);
 
   // finish off dotFile
-  dotFile = fopen("dotFile.gc","a");
+  dotFile = fopen("dotFile.gv","a");
   if(world_rank == 0)
     fprintf(dotFile,"}");
 

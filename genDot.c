@@ -52,7 +52,7 @@ void coord2Dot(coord* connections, int coordLength, int process){
     FILE* dotFile;
 
     //Opens new file to write
-    dotFile = fopen("dotFile.gc","a");
+    dotFile = fopen("dotFile.gv","a");
     int i;
 
     for(i = 0;i < coordLength;i++){
@@ -74,7 +74,7 @@ void coord2Dot(coord* connections, int coordLength, int process){
     for (i = 0; i < coordLength; i+=2) {
         node1 = connections[i].row;
         node2 = connections[i].col;
-        fprintf(dotFile,"%d -- %d [style=filled,fillcolor = %s,color=%s];\n",node1,node2,colors[process],colors[process]);
+        fprintf(dotFile,"%d -- %d [penwidth=3,style=filled,fillcolor = %s,color=%s];\n",node1,node2,colors[process],colors[process]);
     }
 
     //Closes the file
@@ -91,7 +91,7 @@ void node2Dot(int* myNodes, int len, int process) {
   dotFile = fopen("dotFile.gc","a");
 
   for(i=0;i<len;i++)
-    fprintf(dotFile,"%d [style=filled, fillcolor=%s, color=%s]\n", myNodes[i],colors[process],colors[process]);
+    fprintf(dotFile,"%d [penwidth=3,style=filled, fillcolor=%s, color=%s]\n", myNodes[i],colors[process],colors[process]);
 
   //Closes the file
   fclose(dotFile);
