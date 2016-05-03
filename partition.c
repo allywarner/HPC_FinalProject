@@ -80,7 +80,9 @@ int main(int argc,char* argv[]) {
   MPI_Barrier(MPI_COMM_WORLD);
 
   //creates files to write
-  dotFile = fopen("dotFile.gv","a");
+  char filename[16];
+  sprintf(filename,"dotFile_%d_%d_%d.gv",ITER,orth,myNodes);
+  dotFile = fopen(filename,"a");
   discarded = fopen("Matrices/discarded.dat","a");
 
 
@@ -113,7 +115,7 @@ int main(int argc,char* argv[]) {
     coord2Dot(disc,disclen,0);
 
   // finish off dotFile
-  dotFile = fopen("dotFile.gv","a");
+  dotFile = fopen(filename,"a");
   if(world_rank == 0)
     fprintf(dotFile,"}");
 
