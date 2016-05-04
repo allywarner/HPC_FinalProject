@@ -47,7 +47,7 @@ void file2Dot(char* data){
     fclose(dotFile);
 }
 
-void coord2Dot(coord* connections, int coordLength, int process,char filename){
+void coord2Dot(coord* connections, int coordLength, int process,char* filename){
 
     FILE* dotFile;
 
@@ -82,7 +82,8 @@ void coord2Dot(coord* connections, int coordLength, int process,char filename){
 
 }
 
-void node2Dot(int* myNodes, int len, int process,char filename) {
+void node2Dot(int* myNodes, int len, int process,char* filename) {
+    
   FILE* dotFile;
 
   int i;
