@@ -2,7 +2,7 @@
 #include <mpi.h>
 // #define ITER 120
 
-void partition(coord* A, int* myNodes, int* nodeIndex,size_t dim, size_t N, unsigned int ITER, int orth, MPI_Comm comm);
+void partition(coord* A, int* myNodes, int* nodeIndex,size_t dim, size_t N, unsigned int ITER, int orth, MPI_Comm comm,char filename);
 
 int main(int argc,char* argv[]) {
 
