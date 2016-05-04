@@ -99,7 +99,7 @@ int main(int argc,char* argv[]) {
   fclose(dotFile);
 
   // partition the graph that we just read in
-  partition(A,myNodes,nodeIndex,dim,N,ITER,orth,world_comm);
+  partition(A,myNodes,nodeIndex,dim,N,ITER,orth,world_comm,filename);
 
   // barrier so that nobody tries to finish of the dot file while other threads are still working
   MPI_Barrier(MPI_COMM_WORLD);
@@ -132,7 +132,7 @@ int main(int argc,char* argv[]) {
   MPI_Finalize();
 }
 
-void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, unsigned int ITER, int orth, MPI_Comm comm ) {
+void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, unsigned int ITER, int orth, MPI_Comm comm, char filename) {
 
   //figure out comm info
   int rank, color, size, new_size;
