@@ -92,7 +92,7 @@ int main(int argc,char* argv[]) {
   if(world_rank == 0) {
     //Writes the first two lines
     fprintf(dotFile,"graph {\n");
-    fprintf(dotFile,"node [shape = point]\n");
+    fprintf(dotFile,"node [shape = point];\n");
   }
 
   //Closes the file

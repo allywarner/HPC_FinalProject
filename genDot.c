@@ -36,7 +36,7 @@ void file2Dot(char* data){
         if(node1 == node2){
             continue;
         }
-        fprintf(dotFile,"%d -- %d [style=filled,fillcolor = %s,color=%s];\n",node1,node2,colors[process],colors[process]);
+        fprintf(dotFile,"%d -- %d [style=filled,fillcolor=%s,color=%s];\n",node1,node2,colors[process],colors[process]);
     }
 
     //Writes the last line
@@ -74,7 +74,7 @@ void coord2Dot(coord* connections, int coordLength, int process,char* filename){
     for (i = 0; i < coordLength; i+=2) {
         node1 = connections[i].row;
         node2 = connections[i].col;
-        fprintf(dotFile,"%d -- %d [penwidth=3,style=filled,fillcolor = %s,color=%s];\n",node1,node2,colors[process],colors[process]);
+        fprintf(dotFile,"%d -- %d [penwidth=3,style=filled,fillcolor=%s,color=%s];\n",node1,node2,colors[process],colors[process]);
     }
 
     //Closes the file
@@ -92,7 +92,7 @@ void node2Dot(int* myNodes, int len, int process,char* filename) {
   dotFile = fopen(filename,"a");
 
   for(i=0;i<len;i++)
-    fprintf(dotFile,"%d [penwidth=3,style=filled, fillcolor=%s, color=%s];\n", myNodes[i],colors[process],colors[process]);
+    fprintf(dotFile,"%d [penwidth=3,style=filled,fillcolor=%s,color=%s];\n", myNodes[i],colors[process],colors[process]);
 
   //Closes the file
   fclose(dotFile);
