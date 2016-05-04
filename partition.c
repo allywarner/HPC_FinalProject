@@ -345,7 +345,7 @@ void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, unsign
 
     //if the comm size is bigger than 1 recurse
     if(new_size > 1)
-      partition(Anew,myNodes,nodeIndex,newDim,AnewCount,ITER,orth,new_comm);
+      partition(Anew,myNodes,nodeIndex,newDim,AnewCount,ITER,orth,new_comm,filename);
     else{ //otherwise print your output to the dotFile
       int k;
       for(k=0;k<world_size;k++){
