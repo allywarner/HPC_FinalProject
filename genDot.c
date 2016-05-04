@@ -47,12 +47,12 @@ void file2Dot(char* data){
     fclose(dotFile);
 }
 
-void coord2Dot(coord* connections, int coordLength, int process){
+void coord2Dot(coord* connections, int coordLength, int process,char filename){
 
     FILE* dotFile;
 
     //Opens new file to write
-    dotFile = fopen("dotFile.gv","a");
+    dotFile = fopen(filename,"a");
     int i;
 
     for(i = 0;i < coordLength;i++){

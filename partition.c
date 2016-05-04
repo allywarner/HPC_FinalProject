@@ -115,7 +115,7 @@ int main(int argc,char* argv[]) {
 
   // write those edges to the dotFile
   if (world_rank == 0)
-    coord2Dot(disc,disclen,0);
+    coord2Dot(disc,disclen,0,filename);
 
   // finish off dotFile
   dotFile = fopen(filename,"a");
