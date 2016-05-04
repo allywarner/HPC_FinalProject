@@ -92,7 +92,7 @@ void node2Dot(int* myNodes, int len, int process,char* filename) {
   dotFile = fopen(filename,"a");
 
   for(i=0;i<len;i++)
-    fprintf(dotFile,"%d [penwidth=3,style=filled, fillcolor=%s, color=%s]\n", myNodes[i],colors[process],colors[process]);
+    fprintf(dotFile,"%d [penwidth=3,style=filled, fillcolor=%s, color=%s];\n", myNodes[i],colors[process],colors[process]);
 
   //Closes the file
   fclose(dotFile);
