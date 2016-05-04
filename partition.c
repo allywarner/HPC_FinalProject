@@ -350,8 +350,8 @@ void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, unsign
       int k;
       for(k=0;k<world_size;k++){
         if (rank == k){
-          coord2Dot(Anew,AnewCount,world_rank+1);
-          node2Dot(myNodes,newDim,world_rank+1);
+          coord2Dot(Anew,AnewCount,world_rank+1,filename);
+          node2Dot(myNodes,newDim,world_rank+1,filename);
         }
         MPI_Barrier(MPI_COMM_WORLD);
       }

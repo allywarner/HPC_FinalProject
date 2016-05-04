@@ -82,13 +82,13 @@ void coord2Dot(coord* connections, int coordLength, int process,char filename){
 
 }
 
-void node2Dot(int* myNodes, int len, int process) {
+void node2Dot(int* myNodes, int len, int process,char filename) {
   FILE* dotFile;
 
   int i;
 
   //Opens new file to write
-  dotFile = fopen("dotFile.gc","a");
+  dotFile = fopen(filename,"a");
 
   for(i=0;i<len;i++)
     fprintf(dotFile,"%d [penwidth=3,style=filled, fillcolor=%s, color=%s]\n", myNodes[i],colors[process],colors[process]);
