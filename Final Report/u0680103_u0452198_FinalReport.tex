@@ -16,7 +16,7 @@
 \maketitle
 
 \section{Introduction}
-A graph is data that is represented with nodes and edges. The nodes are the points of interest and the edges connect and represent the relationship between the nodes. To partition of graph is to divide the graph into smaller components. A good partition is when the number of edges running between separated components is small. In this project, we partitioned an undirected sparse graph using the Lanzcos algorithm [3] to find the second small eigenvalues and corresponding eigenvectors.  The principal dataset is available from the University of Florida Sparse Matrix Collection [1]. We partitioned four different undirected graphs and tested full reorthogonalization and no orthogonalization as well as different amounts of Lanzcos iterations on each graph. We visualized the results using Graphviz visualization software [3].
+A graph is data that is represented with nodes and edges. The nodes are the points of interest and the edges connect and represent the relationship between the nodes. To partition a graph is to divide the graph into smaller components. A good partition is when the number of edges running between separated components is small. In this project, we attempted to partition an undirected sparse graph using the Lanzcos algorithm [3] to find the second small eigenvalues and corresponding eigenvectors.  The principal dataset is available from the University of Florida Sparse Matrix Collection [1]. We tested full reorthogonalization and no orthogonalization as well as different amounts of Lanzcos iterations before partitioning. We visualized the results using Graphviz visualization software [3].
 
 \section{Description of Algorithm}
 The principle idea behind our approach to graph partitioning is recursive bisection. We bisect the graph and then recursively bisect each subgraph until there is one subgraph per compute node of the compute cluster partition on which we run our code. Here is an outline of the algorithm.
@@ -48,18 +48,52 @@ There are several possible improvements to make to the algorithm. In particular,
 \begin{enumerate}
 	\item The biggest improvement that could be made is that rather than having each compute node calculate the Ritz vector individually, the work and memory storage could be split up among nodes to do this in parallel.  Note that for simplicity we elected to parallelize the calculation of the Ritz vectors only from a shared memory perspective.
 
-	\item The second biggest improvement to make would be to use selective reorthogonalization for the Lanczos iteration rather than full reorthogonalization. Since we only needed the second smallest Ritz value, the algorithm converges quickly and full reorthogonalization isn't terribly exensive. This could be improved by reorthogonalizing only when necessary.
+	\item The second biggest improvement to make would be to use selective reorthogonalization for the Lanczos iteration rather than full reorthogonalization. Since we only needed the second smallest Ritz value, the algorithm converges quickly and full reorthogonalization isn't terribly extensive. This could be improved by reorthogonalizing only when necessary.
 
 	\item There were a couple of minor areas where more parallelization could have been extracted, such as the loop to assign graph nodes to each compute node after the Ritz vector is calculated. These improvements however would have very little effect on the overall performance so for lack of time we decided not to implement them.
 \end{enumerate}
 
 \section{Testing \& Analysis}
 
-\textbf{Ally}
+Timing for the algorithm was tested on 4, 8 and 12 MPI nodes with 10, 20, 40, 80, and 100 Lanzcos iterations with full orthogonalization and no orthogonalization on the matrix shown in Figure 1. The results for the testing is shown in Table 1. During our testing, we have discovered that there is an unknown bug when writing the dot file for visualization in Graphviz [3] in parallel. This yielded unexpected visual results as shown in Figure 2. With this mystery bug, we wanted to at least show proof of concept. Figures 3, 4 and 5 show a small pentagon undirected graph that was partitioned with 2, 3 and 12 processors, respectively, with 100 Lanzcos iterations with orthogonalization showing acceptable visualization results. The black edges represent edges that have been partitioned or "cut." Different colors represent different processors/partitions.
+
+\vspace{2mm}
+
+\centerline {\frame{\includegraphics[scale = 0.7]{matrix1.png}}}
+\centerline{Figure 1. Sparse Undirected Graph to be Partitioned}
+
+\vspace{2mm}
+
+\centerline {\frame{\includegraphics[scale = 1.0]{timingTable.png}}}
+\centerline{Table 1. Timing Testing Results}
+
+\vspace{2mm}
+
+\centerline {\frame{\includegraphics[scale = 1.2]{bigMatrixViz.png}}}
+\centerline{Figure 2. Unexpected Visualization Results}
+
+\vspace{2mm}
+
+\centerline {\frame{\includegraphics[scale = 0.5]{twoP.png}}}
+\centerline{Figure 3. Pentagon Partition with 2 Processors}
+
+\vspace{2mm}
+
+\centerline {\frame{\includegraphics[scale = 0.5]{threeP.png}}}
+\centerline{Figure 4. Pentagon Partition with 3 Processors}
+
+\vspace{2mm}
+
+\centerline {\frame{\includegraphics[scale = 0.5]{twelveP.png}}}
+\centerline{Figure 5. Pentagon Partition with 12 Processors}
 
 \section{Conclusions}
 
-\textbf{Ally}
+From the simple pentagon undirected graph, we can see the partition algorithm is working properly and yielding expected visualization results such as seeing two black lines when there were two processors. There should be two colored partitions, and two black lines as these represent the separations. We get the same expected results for three and twelve processors. However, when we tried to use this algorithm on a large undirected graph we obtained results that were not expected. We believe that this has to do with writing in to the same file from several processors at a time. We have been unsuccessful in finding this bug at this time.
+
+Although the visualization results were unexpected for a large graph, we believe that the timing still represents the inner workings of the algorithm. These timings were done for 10, 20, 40, 80, and 100 Lanczos iterations with full orthogonalization (represented with a 1) and no orthogonalization (represented with a 0). On each processor with or without orthogonalization, the timing increases as iterations increases. This is an expected result as the algorithm is simply running for more time due to having more work to perform. Within each processor, the timing was also increased when full orthogonalization was performed. This is also an expected result due to, again, more work being done. Although the timing difference may not seem substantial because the algorithm is quite fast, but the relative differences can be almost double the time for full reorthogonalization. Unfortunately, we cannot see the visual results to determine if this added time would be worth the results. Across processors, adding more processors is helpful for time when the iterations are low, but when the iterations are up to 100 the timing starts to rise again due to communication costs. Again, it is unfortunate that we cannot see if this added time cost for more iterations would be worth the added time.
+
+In conclusion, we have written a parallel Lanzcos graph partitioning algorithm that we have proved works for small graphs. We would need to revise how the files are written for the visualization software of choice or find another that has a better fit to the projects' needs. Although we cannot see the visual results of a large graph, the timing results do yield expected results which indicates the algorithm is working as expected.
 
 \section{References}
 
