@@ -98,11 +98,18 @@ int main(int argc,char* argv[]) {
   //Closes the file
   fclose(dotFile);
 
+  double begin = omp_get_wtime();
+
   // partition the graph that we just read in
   partition(A,myNodes,nodeIndex,dim,N,ITER,orth,world_comm,filename);
 
   // barrier so that nobody tries to finish of the dot file while other threads are still working
   MPI_Barrier(MPI_COMM_WORLD);
+
+  double end = omp_get_wtime();
+
+  if(world_rank == 0)
+    printf("time: %lf\n", end-begin);
 
 
   // open and read list of discarded edges
@@ -193,7 +200,6 @@ void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, unsign
 
   //lanczos iterations
   double ortho[ITER];
-  double begin = omp_get_wtime();
   for(j=0;j<ITER;j++) {
     matvec(A,diagonal,scanned,nodeIndex,q[j],z,N,dim);
     a[j] = dot(q[j],z,dim);
@@ -248,11 +254,6 @@ void partition(coord* A,int* myNodes,int* nodeIndex,size_t dim, size_t N, unsign
       for(i=0;i<dim;i++)
         q[j+1][i] = z[i]/b[j];
   }
-
-
-
-  double end = omp_get_wtime();
-  printf("time: %lf\n", end-begin);
 
   free(diagonal);
   free(scanned);
